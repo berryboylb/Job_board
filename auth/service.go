@@ -2,10 +2,15 @@ package auth
 
 import (
 	"context"
-	"errors"
-	"os"
 	"crypto/rand"
 	"encoding/base64"
+	"encoding/json"
+	"errors"
+	"io"
+	"net/http"
+	"os"
+	"strings"
+	"fmt"
 
 	"github.com/coreos/go-oidc/v3/oidc"
 	"golang.org/x/oauth2"
@@ -65,4 +70,37 @@ func generateRandomState() (string, error) {
 	state := base64.StdEncoding.EncodeToString(b)
 
 	return state, nil
+}
+
+func generateToken() (*TokenResponse, error) {
+	url := "https://" + os.Getenv("AUTH0_DOMAIN") + "/oauth/token" 
+
+	clientID := os.Getenv("TOKEN_CLIENT_ID")
+	clientSecret := os.Getenv("TOKEN_CLIENT_SECRET")
+	audience := "https://" + os.Getenv("AUTH0_DOMAIN") + "/api/v2/" 
+
+	if clientID == "" || clientSecret == "" || audience == "" {
+		// fmt.Println("Environment variables not set")
+		return  nil, fmt.Errorf("environment variable missing")
+	}
+
+	payload := strings.NewReader(fmt.Sprintf("{\"client_id\":\"%s\",\"client_secret\":\"%s\",\"audience\":\"%s\",\"grant_type\":\"client_credentials\"}", clientID, clientSecret, audience))
+
+	req, _ := http.NewRequest("POST", url, payload)
+
+	req.Header.Add("content-type", "application/json")
+
+	res, _ := http.DefaultClient.Do(req)
+
+	defer res.Body.Close()
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		return nil, err
+	}
+	var response TokenResponse
+	err = json.Unmarshal(body, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
 }

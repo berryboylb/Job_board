@@ -20,18 +20,18 @@ func Route(auth *Authenticator) *gin.Engine {
 	store := cookie.NewStore([]byte("secret"))
 	router.Use(sessions.Sessions("auth-session", store))
 
-	router.Static("/public", "web/static")
-	router.LoadHTMLGlob("web/template/*")
+	// router.Static("/public", "web/static")
+	// router.LoadHTMLGlob("web/template/*")
 
 	router.GET("/", func(ctx *gin.Context) {
-		ctx.HTML(http.StatusOK, "home.html", nil)
+		// ctx.HTML(http.StatusOK, "home.html", nil)
+		ctx.JSON(http.StatusOK, "Hello World!")
 	})
 	router.GET("/login", Login(auth))
 	router.GET("/callback", Callback(auth))
 	router.GET("/user", User)
-	// router.GET("/logout", logout.Handler)
+	router.GET("/logout", Logout)
+	router.GET("/protect", GinJWTMiddleware(), Protect)
 
 	return router
 }
-
-

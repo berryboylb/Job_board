@@ -1,9 +1,11 @@
 package auth
 
 import (
+	"fmt"
 	"net/http"
 	"net/url"
 	"os"
+	"log"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
@@ -49,6 +51,8 @@ func Callback(auth *Authenticator) gin.HandlerFunc {
 			ctx.String(http.StatusInternalServerError, "Failed to verify ID Token.")
 			return
 		}
+		fmt.Println(string(idToken.AccessTokenHash)) // Print the decoded payload of the ID Token.
+		
 
 		var profile map[string]interface{}
 		if err := idToken.Claims(&profile); err != nil {
@@ -70,9 +74,23 @@ func Callback(auth *Authenticator) gin.HandlerFunc {
 
 func User(ctx *gin.Context) {
 	session := sessions.Default(ctx)
-	profile := session.Get("profile")
+	token, err := generateToken();
+	if err != nil {
+		log.Println(err)
+	}
+	//save to db and if user don't exist redirect to token
+	ctx.JSON(http.StatusOK, gin.H{
+		"data": gin.H{
+			"profile":      session.Get("profile"),
+			"access_token": token.AccessToken,
+		},
+	})
+}
 
-	ctx.HTML(http.StatusOK, "user.html", profile)
+func Protect(ctx *gin.Context) {
+	ctx.JSON(http.StatusOK, gin.H{
+		"data": "hello",
+	})
 }
 
 func Logout(ctx *gin.Context) {
