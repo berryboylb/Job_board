@@ -6,11 +6,11 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"strings"
-	"fmt"
 
 	"github.com/coreos/go-oidc/v3/oidc"
 	"golang.org/x/oauth2"
@@ -37,7 +37,7 @@ func New() (*Authenticator, error) {
 		ClientSecret: os.Getenv("AUTH0_CLIENT_SECRET"),
 		RedirectURL:  os.Getenv("AUTH0_CALLBACK_URL"),
 		Endpoint:     provider.Endpoint(),
-		Scopes:       []string{oidc.ScopeOpenID, "profile"},
+		Scopes:       []string{oidc.ScopeOpenID, "profile", "email"},
 	}
 
 	return &Authenticator{
@@ -73,14 +73,14 @@ func generateRandomState() (string, error) {
 }
 
 func generateToken() (*TokenResponse, error) {
-	url := "https://" + os.Getenv("AUTH0_DOMAIN") + "/oauth/token" 
+	url := "https://" + os.Getenv("AUTH0_DOMAIN") + "/oauth/token"
 
 	clientID := os.Getenv("TOKEN_CLIENT_ID")
 	clientSecret := os.Getenv("TOKEN_CLIENT_SECRET")
-	audience := "https://" + os.Getenv("AUTH0_DOMAIN") + "/api/v2/" 
+	audience := "https://" + os.Getenv("AUTH0_DOMAIN") + "/api/v2/"
 
 	if clientID == "" || clientSecret == "" || audience == "" {
-		return  nil, fmt.Errorf("environment variable missing")
+		return nil, fmt.Errorf("environment variable missing")
 	}
 
 	payload := strings.NewReader(fmt.Sprintf("{\"client_id\":\"%s\",\"client_secret\":\"%s\",\"audience\":\"%s\",\"grant_type\":\"client_credentials\"}", clientID, clientSecret, audience))

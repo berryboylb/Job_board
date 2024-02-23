@@ -3,11 +3,30 @@ package main
 import (
 	"log"
 	"net/http"
+	"encoding/gob"
 
 	"github.com/joho/godotenv"
+	"github.com/gin-gonic/gin"
 
 	"job_board/auth"
 )
+
+func Routes(authourize *auth.Authenticator) *gin.Engine {
+	router := gin.Default()
+
+	// To store custom types in our cookies,
+	// we must first register them using gob.Register
+	gob.Register(map[string]interface{}{})
+
+
+	router.GET("/", func(ctx *gin.Context) {
+		ctx.JSON(http.StatusOK, "Hello World!")
+	})
+
+	auth.AuthRoutes(authourize, router)
+
+	return router
+}
 
 func main() {
 	if err := godotenv.Load(); err != nil {
@@ -19,7 +38,9 @@ func main() {
 		log.Fatalf("Failed to initialize the authenticator: %v", err)
 	}
 
-	rtr := auth.Route(authenticator)
+	
+
+	rtr := Routes(authenticator)
 
 	log.Print("Server listening on http://localhost:3000/")
 	

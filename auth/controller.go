@@ -2,10 +2,10 @@ package auth
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
-	"log"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
@@ -52,7 +52,6 @@ func Callback(auth *Authenticator) gin.HandlerFunc {
 			return
 		}
 		fmt.Println(string(idToken.AccessTokenHash)) // Print the decoded payload of the ID Token.
-		
 
 		var profile map[string]interface{}
 		if err := idToken.Claims(&profile); err != nil {
@@ -72,9 +71,17 @@ func Callback(auth *Authenticator) gin.HandlerFunc {
 	}
 }
 
+func IsAuthenticated(ctx *gin.Context) {
+	if sessions.Default(ctx).Get("profile") == nil {
+		ctx.Redirect(http.StatusSeeOther, "/")
+	} else {
+		ctx.Next()
+	}
+}
+
 func User(ctx *gin.Context) {
 	session := sessions.Default(ctx)
-	token, err := generateToken();
+	token, err := generateToken()
 	if err != nil {
 		log.Println(err)
 	}
