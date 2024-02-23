@@ -80,7 +80,6 @@ func generateToken() (*TokenResponse, error) {
 	audience := "https://" + os.Getenv("AUTH0_DOMAIN") + "/api/v2/" 
 
 	if clientID == "" || clientSecret == "" || audience == "" {
-		// fmt.Println("Environment variables not set")
 		return  nil, fmt.Errorf("environment variable missing")
 	}
 
