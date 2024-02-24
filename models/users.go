@@ -26,4 +26,6 @@ type User struct {
 	RoleName   RoleAllowed    `json:"role" sql:"type:role_name"`
 	RoleAccess pq.StringArray `json:"role_access" gorm:"type:text[]; not null"`
 	Profile    *Profile       `gorm:"foreignKey:UserID"`
+	MobileNumber string        `gorm:"type:varchar(25);uniqueIndex"` // Adding mobile number
 }
+
