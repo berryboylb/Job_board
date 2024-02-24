@@ -76,14 +76,13 @@ you need to run this cript to ensure a user can only apply once to a job
 
 ALTER TABLE job_applications
 ADD CONSTRAINT unique_applicant_job UNIQUE (applicant_id, job_id);
-
 */
 type JobApplication struct {
 	gorm.Model
 	ID          uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primaryKey"`
-	JobID       uuid.UUID `gorm:"type:uuid;not null"`
+	JobID       uuid.UUID `gorm:"type:uuid;not null;uniqueIndex:idx_job_applications"`
 	Job         Job       `gorm:"foreignKey:JobID"`
-	ApplicantID uuid.UUID `gorm:"type:uuid;not null"`
+	ApplicantID uuid.UUID `gorm:"type:uuid;not null;uniqueIndex:idx_job_applications"`
 	Applicant   User      `gorm:"foreignKey:ApplicantID"`
 	Status      Status    `gorm:"type:varchar(50);default:'pending'"`
 	AppliedAt   time.Time `gorm:"default:CURRENT_TIMESTAMP"`
