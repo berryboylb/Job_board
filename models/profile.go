@@ -3,24 +3,43 @@ package models
 import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
-	// "log"
-	// "os"
 	"time"
 )
 
 type Profile struct {
 	gorm.Model
-	ID                              uuid.UUID              `gorm:"type:uuid;default:uuid_generate_v4();primaryKey"`
-	UserID                          uuid.UUID              `gorm:"type:uuid;uniqueIndex"` // Unique index enforces one wallet per user
-	User                            User                   `gorm:"foreignKey:UserID"`
-	Bio                             string                 `gorm:"type:LONGTEXT;not null"`
-	Educations                      []Education            `gorm:"foreignKey:ProfileID"`
-	EducationsInternShipExperiences []InternShipExperience `gorm:"foreignKey:ProfileID"`
-	ProjectsExperiences             []InternShipExperience `gorm:"foreignKey:ProfileID"`
-	WorkSamples                     []WorkSample           `gorm:"foreignKey:ProfileID"`
-	Awards                          []Award                `gorm:"foreignKey:ProfileID"`
-	ProfileLanguages                []ProfileLanguage      `gorm:"foreignKey:ProfileID"`
-	SocialMediaAccounts             []SocialMediaAccount   `gorm:"foreignKey:ProfileID"`
+	ID                       uuid.UUID              `gorm:"type:uuid;default:uuid_generate_v4();primaryKey"`
+	UserID                   uuid.UUID              `gorm:"type:uuid;uniqueIndex"` // Unique index enforces one wallet per user
+	User                     User                   `gorm:"foreignKey:UserID"`
+	Bio                      string                 `gorm:"type:LONGTEXT;not null"`
+	Resume                   string                 `gorm:"type:varchar(512);not null"`
+	Educations               []Education            `gorm:"foreignKey:ProfileID"`
+	InternShipExperiences    []InternShipExperience `gorm:"foreignKey:ProfileID"`
+	ProjectsExperiences      []InternShipExperience `gorm:"foreignKey:ProfileID"`
+	WorkSamples              []WorkSample           `gorm:"foreignKey:ProfileID"`
+	Awards                   []Award                `gorm:"foreignKey:ProfileID"`
+	ProfileLanguages         []ProfileLanguage      `gorm:"foreignKey:ProfileID"`
+	SocialMediaAccounts      []SocialMediaAccount   `gorm:"foreignKey:ProfileID"`
+	GenderID                 uuid.UUID              `gorm:"type:uuid;not null"`
+	Gender                   Gender                 `gorm:"foreignKey:GenderID"`
+	CurrentSalary            float64                `gorm:"type:decimal(10,2);default:0.0"`
+	CurrentSalaryCurrencyID  *uuid.UUID             `gorm:"type:uuid"`
+	CurrentSalaryCurrency    SalaryCurrency         `gorm:"foreignKey:CurrentSalaryCurrencyID"`
+	ExpectedSalary           float64                `gorm:"type:decimal(10,2);default:0.0"`
+	ExpectedSalaryCurrencyID *uuid.UUID             `gorm:"type:uuid"`
+	ExpectedSalaryCurrency   SalaryCurrency         `gorm:"foreignKey:ExpectedSalaryCurrencyID"`
+}
+
+type SalaryCurrency struct {
+	gorm.Model
+	ID   uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primaryKey"`
+	Name string    `gorm:"type:varchar(250);not null; uniqueIndex"`
+}
+
+type Gender struct {
+	gorm.Model
+	ID   uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primaryKey"`
+	Name string    `gorm:"type:varchar(250);not null; uniqueIndex"`
 }
 
 type Degree struct {
@@ -29,18 +48,26 @@ type Degree struct {
 	Name string    `gorm:"type:varchar(250);not null; uniqueIndex"`
 }
 
+type AcademicRanking struct {
+	gorm.Model
+	ID   uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primaryKey"`
+	Name string    `gorm:"type:varchar(250);not null; uniqueIndex"`
+}
+
 type Education struct {
 	gorm.Model
-	ID              uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primaryKey"`
-	ProfileID       uuid.UUID `gorm:"type:uuid;not null"`
-	InstitutionName string    `gorm:"type:varchar(100);not null"`
-	FieldOFStudy    string    `gorm:"type:varchar(250);not null"`
-	DegreeID        uuid.UUID `gorm:"type:uuid;not null"`
-	Degree          Degree    `gorm:"foreignKey:DegreeID"`
-	GraduationYear  int       `gorm:"not null"`
-	StartDate       time.Time
-	EndDate         *time.Time
-	IsCurrent       *bool `gorm:"default:false"`
+	ID                uuid.UUID       `gorm:"type:uuid;default:uuid_generate_v4();primaryKey"`
+	ProfileID         uuid.UUID       `gorm:"type:uuid;not null"`
+	InstitutionName   string          `gorm:"type:varchar(100);not null"`
+	FieldOFStudy      string          `gorm:"type:varchar(250);not null"`
+	DegreeID          uuid.UUID       `gorm:"type:uuid;not null"`
+	Degree            Degree          `gorm:"foreignKey:DegreeID"`
+	AcademicRankingID uuid.UUID       `gorm:"type:uuid;not null"`
+	AcademicRanking   AcademicRanking `gorm:"foreignKey:AcademicRankingID"`
+	GraduationYear    int             `gorm:"not null"`
+	StartDate         time.Time
+	EndDate           *time.Time
+	IsCurrent         *bool `gorm:"default:false"`
 }
 
 type InternShipExperience struct {
@@ -104,7 +131,7 @@ type ProfileLanguage struct {
 	ProfileID             uuid.UUID           `gorm:"type:uuid;not null"`
 	Name                  string              `gorm:"type:varchar(100);not null"`
 	LanguageID            uuid.UUID           `gorm:"type:uuid;not null"`
-	Language              Language `gorm:"foreignKey:LanguageID"`
+	Language              Language            `gorm:"foreignKey:LanguageID"`
 	LanguageProficiencyID uuid.UUID           `gorm:"type:uuid;not null"`
 	LanguageProficiency   LanguageProficiency `gorm:"foreignKey:LanguageProficiencyID"`
 }
