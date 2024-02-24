@@ -25,4 +25,5 @@ type User struct {
 	Picture    string         `json:"picture"`
 	RoleName   RoleAllowed    `json:"role" sql:"type:role_name"`
 	RoleAccess pq.StringArray `json:"role_access" gorm:"type:text[]; not null"`
+	Profile    *Profile       `gorm:"foreignKey:UserID"`
 }
