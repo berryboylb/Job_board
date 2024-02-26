@@ -9,10 +9,22 @@ import (
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
+
+	"job_board/models"
 )
 
 func Login(auth *Authenticator) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
+		userType := ctx.Query("type")
+		if userType == "" {
+			ctx.String(http.StatusBadRequest, "user type is required")
+			return
+		}
+		if userType != string(models.PosterRole) && userType != string(models.UserRole) {
+			ctx.String(http.StatusBadRequest, fmt.Sprintf("user type can be either %v or %v", string(models.PosterRole), string(models.UserRole)))
+			return
+		}
+
 		state, err := generateRandomState()
 		if err != nil {
 			ctx.String(http.StatusInternalServerError, err.Error())
@@ -22,6 +34,7 @@ func Login(auth *Authenticator) gin.HandlerFunc {
 		// Save the state inside the session.
 		session := sessions.Default(ctx)
 		session.Set("state", state)
+		session.Set("type", userType)
 		if err := session.Save(); err != nil {
 			ctx.String(http.StatusInternalServerError, err.Error())
 			return
@@ -88,6 +101,7 @@ func User(ctx *gin.Context) {
 	//save to db and if user don't exist redirect to token
 	ctx.JSON(http.StatusOK, gin.H{
 		"data": gin.H{
+			"type":         session.Get("type"),
 			"profile":      session.Get("profile"),
 			"access_token": token.AccessToken,
 		},
