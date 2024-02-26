@@ -32,6 +32,8 @@ type Company struct {
 	EmployeesSizeID uuid.UUID     `gorm:"type:uuid;not null"`
 	EmployeesSize   EmployeesSize `gorm:"foreignKey: EmployeesSizeID"`
 	Logo            string        `gorm:"type:varchar(512);default:'https://via.placeholder.com/200x200'"`
+	UserID          uuid.UUID     `gorm:"type:uuid;not null"` // Removed uniqueIndex
+	User            User          `gorm:"foreignKey:UserID"`
 }
 
 type JobType struct {
@@ -80,11 +82,10 @@ ADD CONSTRAINT unique_applicant_job UNIQUE (applicant_id, job_id);
 type JobApplication struct {
 	gorm.Model
 	ID          uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primaryKey"`
-	JobID       uuid.UUID `gorm:"type:uuid;not null;uniqueIndex:idx_job_applications"`
+	JobID       uuid.UUID `gorm:"type:uuid;not null;index:idx_job_applications"`
 	Job         Job       `gorm:"foreignKey:JobID"`
-	ApplicantID uuid.UUID `gorm:"type:uuid;not null;uniqueIndex:idx_job_applications"`
+	ApplicantID uuid.UUID `gorm:"type:uuid;not null;index:idx_job_applications"`
 	Applicant   User      `gorm:"foreignKey:ApplicantID"`
 	Status      Status    `gorm:"type:varchar(50);default:'pending'"`
 	AppliedAt   time.Time `gorm:"default:CURRENT_TIMESTAMP"`
 }
-

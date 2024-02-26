@@ -15,7 +15,7 @@ type Profile struct {
 	Resume                   string                 `gorm:"type:varchar(512);not null"`
 	Educations               []Education            `gorm:"foreignKey:ProfileID"`
 	InternShipExperiences    []InternShipExperience `gorm:"foreignKey:ProfileID"`
-	ProjectsExperiences      []InternShipExperience `gorm:"foreignKey:ProfileID"`
+	ProjectsExperiences      []ProjectsExperience   `gorm:"foreignKey:ProfileID"`
 	WorkSamples              []WorkSample           `gorm:"foreignKey:ProfileID"`
 	Awards                   []Award                `gorm:"foreignKey:ProfileID"`
 	ProfileLanguages         []ProfileLanguage      `gorm:"foreignKey:ProfileID"`
@@ -149,4 +149,5 @@ type SocialMediaAccount struct {
 	Link          string      `gorm:"type:varchar(512);not null" `
 	SocialMediaID uuid.UUID   `gorm:"type:uuid;not null"`
 	SocialMedia   SocialMedia `gorm:"foreignKey:SocialMediaID"`
+	
 }
