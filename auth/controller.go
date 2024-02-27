@@ -2,7 +2,6 @@ package auth
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -119,12 +118,12 @@ func Authorize(ctx *gin.Context) {
 
 	token, err := generateToken()
 	if err != nil {
-		log.Println(err)
+		ctx.String(http.StatusBadRequest, err.Error())
+		return
 	}
 	//save to db and if user don't exist redirect to token
 	ctx.JSON(http.StatusOK, gin.H{
 		"data": gin.H{
-			"type":         session.Get("type"),
 			"profile":      profile,
 			"subject":      subject,
 			"access_token": token.AccessToken,

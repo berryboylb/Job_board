@@ -19,6 +19,7 @@ func Routes(authourize *auth.Authenticator) *gin.Engine {
 	gob.Register(map[string]interface{}{})
 	gob.Register(auth.GoogleResponse{})
 	gob.Register(auth.EmailResponse{})
+	gob.Register(auth.GithubResponse{})
 
 	router.GET("/", func(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, "Hello World!")

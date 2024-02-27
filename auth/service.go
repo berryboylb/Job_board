@@ -112,6 +112,10 @@ func decoder(idToken *oidc.IDToken, sub string) (interface{}, error) {
 		profile = &GoogleResponse{}
 	case "auth0":
 		profile = &EmailResponse{}
+	case "github":
+		profile = &GithubResponse{}
+	default:
+		return nil, fmt.Errorf("unsupported OAuth provider: %s", sub)
 	}
 
 	if err := idToken.Claims(&profile); err != nil {
@@ -125,6 +129,12 @@ func GoogleUser(session sessions.Session) (interface{}, error) {
 	if !ok {
 		return nil, fmt.Errorf("Profile data not found or not  valid for google response")
 	}
+
+	userType, ok := session.Get("type").(string)
+	if !ok {
+		return nil, fmt.Errorf("invalid type")
+	}
+	fmt.Println(userType)
 	//create db user here
 	return profile, nil
 }
@@ -132,8 +142,29 @@ func GoogleUser(session sessions.Session) (interface{}, error) {
 func EmailUser(session sessions.Session) (interface{}, error) {
 	profile, ok := session.Get("profile").(EmailResponse)
 	if !ok {
-		return nil, fmt.Errorf("Profile data not found or not  valid for email user")
+		return nil, fmt.Errorf("profile data not found or not  valid for email response")
 	}
+
+	userType, ok := session.Get("type").(string)
+	if !ok {
+		return nil, fmt.Errorf("invalid type")
+	}
+	
+	fmt.Println(userType)
+	//create db user here
+	return profile, nil
+}
+
+func GithubUser(session sessions.Session) (interface{}, error) {
+	profile, ok := session.Get("profile").(GithubResponse)
+	if !ok {
+		return nil, fmt.Errorf("profile data not found or not  valid for email response")
+	}
+	userType, ok := session.Get("type").(string)
+	if !ok {
+		return nil, fmt.Errorf("invalid type")
+	}
+	fmt.Println(userType)
 	//create db user here
 	return profile, nil
 }
@@ -144,7 +175,8 @@ func handleUser(sub string, session sessions.Session) (interface{}, error) {
 		return GoogleUser(session)
 	case "auth0":
 		return EmailUser(session)
-
+	case "github":
+		return GithubUser(session)
 	default:
 		return nil, fmt.Errorf("unsupported OAuth provider: %s", sub)
 	}

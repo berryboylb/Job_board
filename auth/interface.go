@@ -41,3 +41,16 @@ type EmailResponse struct {
 	Sub           string    `json:"sub"`
 	UpdatedAt     time.Time `json:"updated_at"`
 }
+
+type GithubResponse struct {
+	Aud       string    `json:"aud"`
+	Exp       int       `json:"exp"`
+	Iat       int       `json:"iat"`
+	Iss       string    `json:"iss"`
+	Name      string    `json:"name"`
+	Nickname  string    `json:"nickname"`
+	Picture   string    `json:"picture"`
+	Sid       string    `json:"sid"`
+	Sub       string    `json:"sub"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
