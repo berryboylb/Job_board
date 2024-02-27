@@ -9,6 +9,7 @@ import (
 	"github.com/joho/godotenv"
 
 	"job_board/auth"
+	// "job_board/models"
 )
 
 func Routes(authourize *auth.Authenticator) *gin.Engine {
@@ -34,6 +35,7 @@ func main() {
 	if err := godotenv.Load(); err != nil {
 		log.Fatalf("Failed to load the env vars: %v", err)
 	}
+	// models.MigrateDb()
 
 	authenticator, err := auth.New()
 	if err != nil {

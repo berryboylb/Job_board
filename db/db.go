@@ -7,12 +7,17 @@ import (
 	"strconv"
 
 	"gorm.io/driver/postgres"
+	"github.com/joho/godotenv"
 	"gorm.io/gorm"
 )
 
 var dbDriver *gorm.DB
 
 func init() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Println("Error loading .env file")
+	}
 
 	//get db creds
 	db_user := os.Getenv("DB_USER")
@@ -20,6 +25,12 @@ func init() {
 	db_name := os.Getenv("DB_NAME")
 	db_host := os.Getenv("DB_HOST")
 	db_port_string := os.Getenv("DB_PORT")
+
+	fmt.Println(db_user, "is the user")
+	fmt.Println(db_password, "is the password")
+	fmt.Println(db_name, "is the name")
+	fmt.Println(db_host, "is the host")
+	fmt.Println(db_port_string, "is the port string")
 
 	//check if any is missing
 	if db_port_string == "" ||  db_user == "" || db_password == ""|| db_name == "" || db_host == ""{

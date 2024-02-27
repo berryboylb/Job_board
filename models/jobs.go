@@ -23,7 +23,7 @@ type Company struct {
 	gorm.Model
 	ID              uuid.UUID     `gorm:"type:uuid;default:uuid_generate_v4();primaryKey"`
 	Name            string        `gorm:"type:varchar(100);not null"`
-	Description     string        `gorm:"type:LONGTEXT;not null"`
+	Description     string        `gorm:"type:text;not null"`
 	Website         string        `gorm:"type:varchar(512)"`
 	IndustryID      uuid.UUID     `gorm:"type:uuid;not null"`
 	Industry        Industry      `gorm:"foreignKey:IndustryID"`
@@ -52,7 +52,7 @@ type Job struct {
 	gorm.Model
 	ID              uuid.UUID        `gorm:"type:uuid;default:uuid_generate_v4();primaryKey"`
 	Title           string           `gorm:"type:varchar(100);not null"`
-	Description     string           `gorm:"type:LONGTEXT;not null"`
+	Description     string           `gorm:"type:text;not null"`
 	Location        string           `gorm:"type:varchar(250);not null"`
 	Salary          float64          `gorm:"type:decimal(10,2);default:0.0"`
 	JobTypeID       uuid.UUID        `gorm:"type:uuid;not null"`

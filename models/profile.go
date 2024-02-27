@@ -11,7 +11,7 @@ type Profile struct {
 	ID                       uuid.UUID              `gorm:"type:uuid;default:uuid_generate_v4();primaryKey"`
 	UserID                   uuid.UUID              `gorm:"type:uuid;uniqueIndex"` // Unique index enforces one wallet per user
 	User                     User                   `gorm:"foreignKey:UserID"`
-	Bio                      string                 `gorm:"type:LONGTEXT;not null"`
+	Bio                      string                 `gorm:"type:text;not null"`
 	Resume                   string                 `gorm:"type:varchar(512);not null"`
 	Educations               []Education            `gorm:"foreignKey:ProfileID"`
 	InternShipExperiences    []InternShipExperience `gorm:"foreignKey:ProfileID"`
@@ -76,7 +76,7 @@ type InternShipExperience struct {
 	ProfileID   uuid.UUID `gorm:"type:uuid;not null"`
 	CompanyName string    `gorm:"type:varchar(250);not null"`
 	Title       string    `gorm:"type:varchar(100);not null"`
-	Description string    `gorm:"type:LONGTEXT;not null"`
+	Description string    `gorm:"type:text;not null"`
 	StartDate   time.Time
 	EndDate     *time.Time
 	IsCurrent   *bool `gorm:"default:false"`
@@ -88,7 +88,7 @@ type ProjectsExperience struct {
 	ProfileID   uuid.UUID `gorm:"type:uuid;not null"`
 	ProjectName string    `gorm:"type:varchar(250);not null"`
 	Title       string    `gorm:"type:varchar(100);not null"`
-	Description string    `gorm:"type:LONGTEXT;not null"`
+	Description string    `gorm:"type:text;not null"`
 	Link        string    `gorm:"type:varchar(512);not null" ` // Adjusted to use varchar and added not null
 	StartDate   time.Time
 	EndDate     *time.Time // Made nullable
@@ -100,7 +100,7 @@ type WorkSample struct {
 	ProfileID   uuid.UUID `gorm:"type:uuid;not null"`
 	Attachment  string    `gorm:"type:varchar(512);not null" `
 	Link        string    `gorm:"type:varchar(512);not null" `
-	Description string    `gorm:"type:LONGTEXT;not null"`
+	Description string    `gorm:"type:text;not null"`
 }
 
 type Award struct {
@@ -109,7 +109,7 @@ type Award struct {
 	ProfileID   uuid.UUID `gorm:"type:uuid;not null"`
 	Title       string    `gorm:"type:varchar(100);not null"`
 	Year        int       `gorm:"not null"`
-	Description string    `gorm:"type:LONGTEXT;not null"`
+	Description string    `gorm:"type:text;not null"`
 }
 
 type Language struct {
