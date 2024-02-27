@@ -15,7 +15,18 @@ import (
 	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/gin-contrib/sessions"
 	"golang.org/x/oauth2"
+	"gorm.io/gorm"
+	"github.com/google/uuid"
+
+	"job_board/db"
+	"job_board/models"
 )
+
+var database *gorm.DB
+
+func init() {
+	database = db.GetDB()
+}
 
 // Authenticator is used to authenticate our users.
 type Authenticator struct {
@@ -127,7 +138,7 @@ func decoder(idToken *oidc.IDToken, sub string) (interface{}, error) {
 func GoogleUser(session sessions.Session) (interface{}, error) {
 	profile, ok := session.Get("profile").(GoogleResponse)
 	if !ok {
-		return nil, fmt.Errorf("Profile data not found or not  valid for google response")
+		return nil, fmt.Errorf("profile data not found or not  valid for google response")
 	}
 
 	userType, ok := session.Get("type").(string)
@@ -149,7 +160,7 @@ func EmailUser(session sessions.Session) (interface{}, error) {
 	if !ok {
 		return nil, fmt.Errorf("invalid type")
 	}
-	
+
 	fmt.Println(userType)
 	//create db user here
 	return profile, nil
@@ -181,3 +192,34 @@ func handleUser(sub string, session sessions.Session) (interface{}, error) {
 		return nil, fmt.Errorf("unsupported OAuth provider: %s", sub)
 	}
 }
+
+func CreateUser(user models.User) (*models.User, bool, error) {
+	// Start a new transaction
+	tx := database.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	existingUser := &models.User{}
+	if err := tx.FirstOrCreate(existingUser, user).Error; err != nil {
+		tx.Rollback() // Rollback the transaction if the balance fetch or creation fails
+		return nil, false, fmt.Errorf("error fetching or creating user: %w", err)
+	}
+
+	// If the user already exists, return the existing user
+	if existingUser.ID != uuid.Nil {
+		tx.Commit() // Commit the transaction as we're not creating a new user
+		return existingUser, false, nil
+	}
+
+	// Commit the transaction
+	if err := tx.Commit().Error; err != nil {
+		return nil, false, fmt.Errorf("error committing transaction: %w", err)
+	}
+
+	 return &user, true, nil
+}
+
+
