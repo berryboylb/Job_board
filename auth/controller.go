@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
@@ -64,23 +65,30 @@ func Callback(auth *Authenticator) gin.HandlerFunc {
 			ctx.String(http.StatusInternalServerError, "Failed to verify ID Token.")
 			return
 		}
-		fmt.Println(string(idToken.AccessTokenHash)) // Print the decoded payload of the ID Token.
 
-		var profile map[string]interface{}
-		if err := idToken.Claims(&profile); err != nil {
+		fmt.Println("hello", strings.Split(idToken.Subject, "|")[0])
+		sub := strings.Split(idToken.Subject, "|")[0]
+		// var profile map[string]interface{}
+		// if err := idToken.Claims(&profile); err != nil {
+		// 	ctx.String(http.StatusInternalServerError, err.Error())
+		// 	return
+		// }
+		profile, err := decoder(idToken, sub)
+		if err != nil {
 			ctx.String(http.StatusInternalServerError, err.Error())
 			return
 		}
 
 		session.Set("access_token", token.AccessToken)
 		session.Set("profile", profile)
+		session.Set("subject", sub)
 		if err := session.Save(); err != nil {
 			ctx.String(http.StatusInternalServerError, err.Error())
 			return
 		}
 
 		// Redirect to logged in page.
-		ctx.Redirect(http.StatusTemporaryRedirect, "/user")
+		ctx.Redirect(http.StatusTemporaryRedirect, "/authorize")
 	}
 }
 
@@ -92,8 +100,23 @@ func IsAuthenticated(ctx *gin.Context) {
 	}
 }
 
-func User(ctx *gin.Context) {
+func Authorize(ctx *gin.Context) {
+	//decode the profile a normal variable
+	//populate the user with the type and the profile data
+	//i want to do a firstorCreate method to check if the user is already in the database and return it instead of creating a new one every
+	//generate a token with only read access and encode the email address of the user in it
 	session := sessions.Default(ctx)
+	subject, ok := session.Get("subject").(string)
+	if !ok {
+		ctx.String(http.StatusInternalServerError, "invalid auth0 subject")
+		return
+	}
+	profile, err := handleUser(subject, session)
+	if err != nil {
+		ctx.String(http.StatusBadRequest, err.Error())
+		return
+	}
+
 	token, err := generateToken()
 	if err != nil {
 		log.Println(err)
@@ -102,9 +125,17 @@ func User(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{
 		"data": gin.H{
 			"type":         session.Get("type"),
-			"profile":      session.Get("profile"),
+			"profile":      profile,
+			"subject":      subject,
 			"access_token": token.AccessToken,
 		},
+	})
+}
+
+func User(ctx *gin.Context) {
+	//i just want to get the user data
+	ctx.JSON(http.StatusOK, gin.H{
+		"data": "user data",
 	})
 }
 

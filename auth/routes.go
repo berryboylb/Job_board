@@ -12,7 +12,8 @@ func AuthRoutes(auth *Authenticator, router *gin.Engine) {
 	router.Use(sessions.Sessions("auth-session", store))
 	router.GET("/login", Login(auth))
 	router.GET("/callback", Callback(auth))
-	router.GET("/user", IsAuthenticated, User)
+	router.GET("/authorize", IsAuthenticated, Authorize)
+	router.GET("/user", GinJWTMiddleware(), User)
 	router.GET("/logout", Logout)
 	router.GET("/protect", GinJWTMiddleware(), Protect)
 }

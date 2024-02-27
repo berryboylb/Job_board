@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/coreos/go-oidc/v3/oidc"
+	"github.com/gin-contrib/sessions"
 	"golang.org/x/oauth2"
 )
 
@@ -102,4 +103,49 @@ func generateToken() (*TokenResponse, error) {
 		return nil, err
 	}
 	return &response, nil
+}
+
+func decoder(idToken *oidc.IDToken, sub string) (interface{}, error) {
+	var profile interface{}
+	switch sub {
+	case "google-oauth2":
+		profile = &GoogleResponse{}
+	case "auth0":
+		profile = &EmailResponse{}
+	}
+
+	if err := idToken.Claims(&profile); err != nil {
+		return nil, err
+	}
+	return profile, nil
+}
+
+func GoogleUser(session sessions.Session) (interface{}, error) {
+	profile, ok := session.Get("profile").(GoogleResponse)
+	if !ok {
+		return nil, fmt.Errorf("Profile data not found or not  valid for google response")
+	}
+	//create db user here
+	return profile, nil
+}
+
+func EmailUser(session sessions.Session) (interface{}, error) {
+	profile, ok := session.Get("profile").(EmailResponse)
+	if !ok {
+		return nil, fmt.Errorf("Profile data not found or not  valid for email user")
+	}
+	//create db user here
+	return profile, nil
+}
+
+func handleUser(sub string, session sessions.Session) (interface{}, error) {
+	switch sub {
+	case "google-oauth2":
+		return GoogleUser(session)
+	case "auth0":
+		return EmailUser(session)
+
+	default:
+		return nil, fmt.Errorf("unsupported OAuth provider: %s", sub)
+	}
 }
