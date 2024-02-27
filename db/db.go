@@ -26,12 +26,6 @@ func init() {
 	db_host := os.Getenv("DB_HOST")
 	db_port_string := os.Getenv("DB_PORT")
 
-	fmt.Println(db_user, "is the user")
-	fmt.Println(db_password, "is the password")
-	fmt.Println(db_name, "is the name")
-	fmt.Println(db_host, "is the host")
-	fmt.Println(db_port_string, "is the port string")
-
 	//check if any is missing
 	if db_port_string == "" ||  db_user == "" || db_password == ""|| db_name == "" || db_host == ""{
 		log.Fatal("Error loading db port env variables")

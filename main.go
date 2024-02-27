@@ -9,7 +9,7 @@ import (
 	"github.com/joho/godotenv"
 
 	"job_board/auth"
-	// "job_board/models"
+	"job_board/models"
 )
 
 func Routes(authourize *auth.Authenticator) *gin.Engine {
@@ -21,6 +21,9 @@ func Routes(authourize *auth.Authenticator) *gin.Engine {
 	gob.Register(auth.GoogleResponse{})
 	gob.Register(auth.EmailResponse{})
 	gob.Register(auth.GithubResponse{})
+	gob.Register(models.AdminRole)
+	gob.Register(models.UserRole)
+	gob.Register(models.PosterRole)
 
 	router.GET("/", func(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, "Hello World!")

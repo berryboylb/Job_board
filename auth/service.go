@@ -14,9 +14,9 @@ import (
 
 	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/gin-contrib/sessions"
+	"github.com/google/uuid"
 	"golang.org/x/oauth2"
 	"gorm.io/gorm"
-	"github.com/google/uuid"
 
 	"job_board/db"
 	"job_board/models"
@@ -141,13 +141,34 @@ func GoogleUser(session sessions.Session) (interface{}, error) {
 		return nil, fmt.Errorf("profile data not found or not  valid for google response")
 	}
 
-	userType, ok := session.Get("type").(string)
+	userType, ok := session.Get("type").(models.RoleAllowed)
 	if !ok {
 		return nil, fmt.Errorf("invalid type")
 	}
-	fmt.Println(userType)
+	user := models.User{
+		Email:      profile.Email,
+		Name:       profile.Name,
+		Picture:    profile.Picture,
+		ProviderID: profile.Sub,
+		RoleName:   userType,
+	}
+
+	dbUser, isNew, err := CreateUser(user)
+	if err != nil {
+		if errors.Is(err, gorm.ErrDuplicatedKey) {
+			return nil, errors.New("invalid type for this user")
+		}
+		return nil, err
+	}
+
+	go func() {
+		if isNew {
+			//send welcome email with novu
+		}
+	}()
+
 	//create db user here
-	return profile, nil
+	return dbUser, nil
 }
 
 func EmailUser(session sessions.Session) (interface{}, error) {
@@ -156,14 +177,36 @@ func EmailUser(session sessions.Session) (interface{}, error) {
 		return nil, fmt.Errorf("profile data not found or not  valid for email response")
 	}
 
-	userType, ok := session.Get("type").(string)
+	userType, ok := session.Get("type").(models.RoleAllowed)
 	if !ok {
 		return nil, fmt.Errorf("invalid type")
 	}
 
-	fmt.Println(userType)
+	fmt.Println(&profile.Email)
+	user := models.User{
+		Email:      profile.Email,
+		Name:       profile.Name,
+		Picture:    profile.Picture,
+		ProviderID: profile.Sub,
+		RoleName:   userType,
+	}
+
+	dbUser, isNew, err := CreateUser(user)
+	if err != nil {
+		if errors.Is(err, gorm.ErrDuplicatedKey) {
+			return nil, errors.New("invalid type for this user")
+		}
+		return nil, err
+	}
+
+	go func() {
+		if isNew {
+			//send welcome email with novu
+		}
+	}()
+
 	//create db user here
-	return profile, nil
+	return dbUser, nil
 }
 
 func GithubUser(session sessions.Session) (interface{}, error) {
@@ -171,13 +214,32 @@ func GithubUser(session sessions.Session) (interface{}, error) {
 	if !ok {
 		return nil, fmt.Errorf("profile data not found or not  valid for email response")
 	}
-	userType, ok := session.Get("type").(string)
+	userType, ok := session.Get("type").(models.RoleAllowed)
 	if !ok {
 		return nil, fmt.Errorf("invalid type")
 	}
-	fmt.Println(userType)
+
+	user := models.User{
+		Name:       profile.Name,
+		Picture:    profile.Picture,
+		ProviderID: profile.Sub,
+		RoleName:   userType,
+	}
+	dbUser, isNew, err := CreateUser(user)
+	if err != nil {
+		if errors.Is(err, gorm.ErrDuplicatedKey) {
+			return nil, errors.New("invalid type for this user")
+		}
+		return nil, err
+	}
+
+	go func() {
+		if isNew {
+			//send welcome email with novu
+		}
+	}()
 	//create db user here
-	return profile, nil
+	return dbUser, nil
 }
 
 func handleUser(sub string, session sessions.Session) (interface{}, error) {
@@ -203,7 +265,7 @@ func CreateUser(user models.User) (*models.User, bool, error) {
 	}()
 
 	existingUser := &models.User{}
-	if err := tx.FirstOrCreate(existingUser, user).Error; err != nil {
+	if err := tx.FirstOrCreate(existingUser, user).Preload("Profile").Preload("JobApplications").Preload("Companies").Error; err != nil {
 		tx.Rollback() // Rollback the transaction if the balance fetch or creation fails
 		return nil, false, fmt.Errorf("error fetching or creating user: %w", err)
 	}
@@ -219,7 +281,5 @@ func CreateUser(user models.User) (*models.User, bool, error) {
 		return nil, false, fmt.Errorf("error committing transaction: %w", err)
 	}
 
-	 return &user, true, nil
+	return &user, true, nil
 }
-
-

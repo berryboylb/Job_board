@@ -20,7 +20,14 @@ func Login(auth *Authenticator) gin.HandlerFunc {
 			ctx.String(http.StatusBadRequest, "user type is required")
 			return
 		}
-		if userType != string(models.PosterRole) && userType != string(models.UserRole) {
+
+		var role models.RoleAllowed
+		switch userType {
+		case string(models.PosterRole):
+			role = models.PosterRole
+		case string(models.UserRole):
+			role = models.UserRole
+		default:
 			ctx.String(http.StatusBadRequest, fmt.Sprintf("user type can be either %v or %v", string(models.PosterRole), string(models.UserRole)))
 			return
 		}
@@ -34,7 +41,7 @@ func Login(auth *Authenticator) gin.HandlerFunc {
 		// Save the state inside the session.
 		session := sessions.Default(ctx)
 		session.Set("state", state)
-		session.Set("type", userType)
+		session.Set("type", role)
 		if err := session.Save(); err != nil {
 			ctx.String(http.StatusInternalServerError, err.Error())
 			return
@@ -64,8 +71,6 @@ func Callback(auth *Authenticator) gin.HandlerFunc {
 			ctx.String(http.StatusInternalServerError, "Failed to verify ID Token.")
 			return
 		}
-
-		fmt.Println("hello", strings.Split(idToken.Subject, "|")[0])
 		sub := strings.Split(idToken.Subject, "|")[0]
 		// var profile map[string]interface{}
 		// if err := idToken.Claims(&profile); err != nil {
@@ -110,6 +115,7 @@ func Authorize(ctx *gin.Context) {
 		ctx.String(http.StatusInternalServerError, "invalid auth0 subject")
 		return
 	}
+	fmt.Println(subject)
 	profile, err := handleUser(subject, session)
 	if err != nil {
 		ctx.String(http.StatusBadRequest, err.Error())
