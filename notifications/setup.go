@@ -3,11 +3,9 @@ package notifications
 import (
 	novu "github.com/novuhq/go-novu/lib"
 
-	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 
 	"context"
-	"fmt"
 	"log"
 	"os"
 )
@@ -21,45 +19,37 @@ func init() {
 	if err != nil {
 		log.Println("Error loading .env file")
 	}
-
 	novuApiKey := os.Getenv("NOVU_API_KEY")
-
-	//check if key isn't empty
 	if novuApiKey == "" {
-		log.Fatal("Error loading db port env variables")
+		log.Fatal("Error loading novu api key")
 	}
-
 	novuClient = novu.NewAPIClient(novuApiKey, &novu.Config{})
 }
 
-func CreateSubscriber(userDetails Subscriber) error {
-	subscriberID := uuid.New().String()
+func CreateSubscriber(userDetails Subscriber) (*novu.SubscriberResponse, error) {
 	subscriber := novu.SubscriberPayload{
 		FirstName: userDetails.Name,
 		Email:     userDetails.Email,
 		Avatar:    userDetails.Avatar,
 		Data:      userDetails.Data,
 	}
-	resp, err := novuClient.SubscriberApi.Identify(ctx, subscriberID, subscriber)
+	resp, err := novuClient.SubscriberApi.Identify(ctx, userDetails.SubscriberID, subscriber)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	fmt.Println(resp)
-	return nil
+	return &resp, nil
 }
 
-func UpdateSubscriber(name string) error {
-	subscriberID := uuid.New().String()
+func UpdateSubscriber(subscriberID string, name string) (*novu.SubscriberResponse, error) {
 	updateSubscriber := novu.SubscriberPayload{FirstName: name}
 	resp, err := novuClient.SubscriberApi.Update(ctx, subscriberID, updateSubscriber)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	fmt.Println(resp)
-	return nil
+	return &resp, nil
 }
 
-func TriggerNotification(payload Trigger) error {
+func SendNotification(payload Trigger) (*novu.EventResponse, error) {
 	to := map[string]interface{}{
 		"lastName":     "",
 		"firstName":    payload.Name,
@@ -72,18 +62,59 @@ func TriggerNotification(payload Trigger) error {
 			"logo": payload.Logo,
 		},
 	}
-	triggerResp, err := novuClient.EventApi.Trigger(ctx, payload.EventID, novu.ITriggerPayloadOptions{
+	resp, err := novuClient.EventApi.Trigger(ctx, payload.EventID, novu.ITriggerPayloadOptions{
 		To:      to,
 		Payload: data,
 	})
 	if err != nil {
+		return nil, err
+	}
+	return &resp, nil
+}
+
+func CreateTopic(topicKey string, topicName string) error {
+	err := novuClient.TopicsApi.Create(ctx, topicKey, topicName)
+	if err != nil {
 		return err
 	}
-
-	fmt.Println(triggerResp)
 	return nil
 }
 
-func CreateTopic()  {
-	
+func AddSubscriber(topicKey string, subscribers []string) error {
+	err := novuClient.TopicsApi.AddSubscribers(ctx, topicKey, subscribers)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func RemoveSubscriber(topicKey string, subscribers []string) error {
+	err := novuClient.TopicsApi.RemoveSubscribers(ctx, topicKey, subscribers)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func SendTopicNotification(arg TriggerTopic) (*novu.EventResponse, error) {
+	to := map[string]interface{}{
+		"type":     "Topic",
+		"topicKey": arg.TopicKey,
+	}
+	payload := map[string]interface{}{
+		"name": arg.Title,
+		"organization": map[string]interface{}{
+			"logo": arg.Logo,
+		},
+	}
+
+	resp, err := novuClient.EventApi.Trigger(ctx, arg.EventID, novu.ITriggerPayloadOptions{
+		To:      to,
+		Payload: payload,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+	return &resp, nil
 }

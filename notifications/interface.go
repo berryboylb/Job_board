@@ -1,6 +1,7 @@
 package notifications
 
 type Subscriber struct {
+	SubscriberID string `json:"subscriberId"`
 	Name   string                 `json:"name"`
 	Email  string                 `json:"email"`
 	Avatar string                 `json:"avatar"`
@@ -14,4 +15,11 @@ type Trigger struct {
 	Email        string `json:"email"`
 	Title        string `json:"title"`
 	Logo         string `json:"logo"`
+}
+
+type TriggerTopic struct {
+	TopicKey string `json:"topic_key"`
+	EventID  string `json:"eventId"`
+	Title    string `json:"title"`
+	Logo     string `json:"logo"`
 }
