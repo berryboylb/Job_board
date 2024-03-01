@@ -133,7 +133,7 @@ func CreateAdmin(ctx *gin.Context) {
 		notification := notifications.Trigger{
 			Name:         user.Name,
 			Email:        user.Email,
-			Title:        "Welcome to Jobby",
+			Title:        "You have the power",
 			SubscriberID: user.SubscriberID,
 			EventID:      "admin-welcome",
 			Logo:         "https://via.placeholder.com/200x200",
