@@ -1,10 +1,16 @@
 package user
 
 import (
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+
+	"log"
 	"net/http"
 
+	"job_board/helpers"
 	"job_board/models"
+	"job_board/notifications"
 )
 
 func User(ctx *gin.Context) {
@@ -12,53 +18,221 @@ func User(ctx *gin.Context) {
 
 	value, exists := ctx.Get("user")
 	if !exists {
-		ctx.String(http.StatusUnauthorized, "User not found in session")
+		helpers.CreateResponse(ctx, helpers.Response{
+			Message:    "User not found in session",
+			StatusCode: http.StatusUnauthorized,
+			Data:       nil,
+		})
 		return
 	}
 
 	user, ok := value.(models.User)
 	if !ok {
-		ctx.String(http.StatusInternalServerError, "Mismatching types")
-		ctx.Abort()
+		helpers.CreateResponse(ctx, helpers.Response{
+			Message:    "Mismatching types",
+			StatusCode: http.StatusInternalServerError,
+			Data:       nil,
+		})
 		return
 	}
 	// Now 'user' contains the user if it exists, and you can proceed with further processing
-
-	ctx.JSON(http.StatusOK, gin.H{
-		"message":    "successfully fetched user",
-		"data":       user,
-		"statusCode": http.StatusOK,
+	helpers.CreateResponse(ctx, helpers.Response{
+		Message:    "successfully fetched user",
+		StatusCode: http.StatusOK,
+		Data:       user,
 	})
 }
 
 func GetAllUsers(ctx *gin.Context) {
+	query := UserDetails{
+		Name:         ctx.Query("name"),
+		Email:        ctx.Query("email"),
+		Picture:      ctx.Query("picture"),
+		RoleName:     ctx.Query("role"),
+		ProviderID:   ctx.Query("provider_id"),
+		SubscriberID: ctx.Query("subscriber_id"),
+		MobileNumber: ctx.Query("mobile_number"),
+	}
 	//i just want to get the user data
+	users, total, page, perPage, err := GetUsers(query, ctx.Query("page"), ctx.Query("pageNumber"))
 
-	ctx.JSON(http.StatusOK, gin.H{
-		"data": "user data",
+	if err != nil {
+		helpers.CreateResponse(ctx, helpers.Response{
+			Message:    err.Error(),
+			StatusCode: http.StatusInternalServerError,
+			Data:       nil,
+		})
+		return
+	}
+
+	helpers.CreateResponse(ctx, helpers.Response{
+		Message:    "successfully fetched users",
+		StatusCode: http.StatusOK,
+		Data: map[string]interface{}{
+			"data":     users,
+			"total":    total,
+			"page":     page,
+			"per_page": perPage,
+		},
 	})
 }
 
 func CreateAdmin(ctx *gin.Context) {
-	//i just want to get the user data
+	var req Admin
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		helpers.CreateResponse(ctx, helpers.Response{
+			Message:    err.Error(),
+			StatusCode: http.StatusInternalServerError,
+			Data:       nil,
+		})
+		return
+	}
+	subscriberID := uuid.NewString()
+	providerID := "admin|" + subscriberID
+	newUser := models.User{
+		Name:         req.Name,
+		MobileNumber: &req.MobileNumber,
+		Picture:      req.Picture,
+		RoleName:     models.AdminRole,
+		ProviderID:   providerID,
+		SubscriberID: subscriberID,
+	}
 
-	ctx.JSON(http.StatusOK, gin.H{
-		"data": "user data",
+	user, err := CreateAdminUser(newUser)
+	if err != nil {
+		helpers.CreateResponse(ctx, helpers.Response{
+			Message:    err.Error(),
+			StatusCode: http.StatusInternalServerError,
+			Data:       nil,
+		})
+		return
+	}
+
+	helpers.CreateResponse(ctx, helpers.Response{
+		Message:    "successfully created admin",
+		StatusCode: http.StatusOK,
+		Data:       user,
 	})
+
+	go func() {
+		log.Print("Try creating subscriber ")
+		subscriber := notifications.Subscriber{
+			SubscriberID: user.SubscriberID,
+			Name:         user.Name,
+			Email:        user.Email,
+			Avatar:       user.Picture,
+			Data:         map[string]interface{}{},
+		}
+
+		if _, err := notifications.CreateSubscriber(subscriber); err != nil {
+			log.Printf("Failed to create subscriber: %v", err)
+			return
+		}
+		log.Printf("finished creating subscriber ID: %v", subscriber.SubscriberID)
+		log.Print("Send notification ")
+		notification := notifications.Trigger{
+			Name:         user.Name,
+			Email:        user.Email,
+			Title:        "Welcome to Jobby",
+			SubscriberID: user.SubscriberID,
+			EventID:      "admin-welcome",
+			Logo:         "https://via.placeholder.com/200x200",
+			Data: map[string]interface{}{
+				"companyName": "Jobby",
+			},
+		}
+
+		if _, err := notifications.SendNotification(notification); err != nil {
+			log.Printf("Failed to send notification: %v", err)
+			return
+		}
+		log.Print("Successfully sent welcome notification to admin")
+
+	}()
 }
 
 func UpdateUser(ctx *gin.Context) {
-	//i just want to get the user data
+	value, exists := ctx.Get("user")
+	if !exists {
+		helpers.CreateResponse(ctx, helpers.Response{
+			Message:    "User not found in session",
+			StatusCode: http.StatusUnauthorized,
+			Data:       nil,
+		})
+		return
+	}
 
-	ctx.JSON(http.StatusOK, gin.H{
-		"data": "user data",
+	user, ok := value.(models.User)
+	if !ok {
+		helpers.CreateResponse(ctx, helpers.Response{
+			Message:    "Mismatching types",
+			StatusCode: http.StatusInternalServerError,
+			Data:       nil,
+		})
+		return
+	}
+
+	var req UserDetails
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		helpers.CreateResponse(ctx, helpers.Response{
+			Message:    err.Error(),
+			StatusCode: http.StatusInternalServerError,
+			Data:       nil,
+		})
+		return
+	}
+	session := sessions.Default(ctx)
+	newUser, err := UpdateSingleUser(user.ID, req)
+	session.Set(newUser.ProviderID, newUser)
+	if err != nil {
+		helpers.CreateResponse(ctx, helpers.Response{
+			Message:    err.Error(),
+			StatusCode: http.StatusInternalServerError,
+			Data:       nil,
+		})
+		return
+	}
+
+	helpers.CreateResponse(ctx, helpers.Response{
+		Message:    "successfully updated user",
+		StatusCode: http.StatusOK,
+		Data:       newUser,
 	})
 }
 
 func DeleteUser(ctx *gin.Context) {
-	//i just want to get the user data
+	value, exists := ctx.Get("user")
+	if !exists {
+		helpers.CreateResponse(ctx, helpers.Response{
+			Message:    "User not found in session",
+			StatusCode: http.StatusUnauthorized,
+			Data:       nil,
+		})
+		return
+	}
 
-	ctx.JSON(http.StatusOK, gin.H{
-		"data": "user data",
+	user, ok := value.(models.User)
+	if !ok {
+		helpers.CreateResponse(ctx, helpers.Response{
+			Message:    "Mismatching types",
+			StatusCode: http.StatusInternalServerError,
+			Data:       nil,
+		})
+		return
+	}
+	err := DeleteSingleUser(user.ID)
+
+	if err != nil {
+		helpers.CreateResponse(ctx, helpers.Response{
+			Message:    err.Error(),
+			StatusCode: http.StatusUnauthorized,
+			Data:       nil,
+		})
+		return
+	}
+	helpers.CreateResponse(ctx, helpers.Response{
+		Message:    "successfully deleted user",
+		StatusCode: http.StatusOK,
+		Data:       nil,
 	})
 }

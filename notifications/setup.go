@@ -58,15 +58,10 @@ func SendNotification(payload Trigger) (*novu.EventResponse, error) {
 		"subscriberId": payload.SubscriberID,
 		"email":        payload.Email,
 	}
-	data := map[string]interface{}{
-		"name": payload.Title,
-		"organization": map[string]interface{}{
-			"logo": payload.Logo,
-		},
-	}
+
 	resp, err := novuClient.EventApi.Trigger(ctx, payload.EventID, novu.ITriggerPayloadOptions{
 		To:      to,
-		Payload: data,
+		Payload: payload.Data, // dynamic data
 	})
 	if err != nil {
 		return nil, err

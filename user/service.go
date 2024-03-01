@@ -1,9 +1,12 @@
 package user
 
 import (
-	"strconv"
+	"errors"
+	"fmt"
 	"log"
+	"strconv"
 
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 
 	"job_board/db"
@@ -59,7 +62,6 @@ func GetUsers(filter UserDetails, pageNumber string, pageSize string) ([]models.
 		db = db.Where("picture LIKE ?", "%"+filter.Picture+"%")
 	}
 
-
 	if filter.MobileNumber != "" {
 		db = db.Where("mobile_number LIKE ?", "%"+filter.MobileNumber+"%")
 	}
@@ -88,3 +90,65 @@ func GetUsers(filter UserDetails, pageNumber string, pageSize string) ([]models.
 
 	return users, total, page, perPage, nil
 }
+
+func DeleteSingleUser(userID uuid.UUID) error {
+	err := database.Delete(&models.User{}, userID).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return errors.New("user already deleted")
+		}
+		return err
+	}
+	return nil
+}
+
+func UpdateSingleUser(id uuid.UUID, values interface{}) (*models.User, error) {
+	err := database.Model(models.User{}).Where("id = ?", id).Updates(values).Error
+	if err != nil {
+		return nil, err
+	}
+
+	// Retrieve the updated user
+	var user models.User
+	err = database.Preload("Role").Preload("Role.Permissions").Where("id = ?", id).First(&user).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}
+
+func CreateAdminUser(user models.User) (*models.User, error) {
+    tx := database.Begin()
+    defer func() {
+        if r := recover(); r != nil {
+            tx.Rollback()
+        }
+    }()
+
+    // Try to find the user
+    existingUser := &models.User{}
+    result := tx.Preload("Profile").Where("mobile_number = ? OR email = ?", user.MobileNumber, user.Email).First(existingUser)
+    if result.Error != nil {
+        tx.Rollback()
+        return nil, fmt.Errorf("error fetching user: %w", result.Error)
+    }
+
+    if result.RowsAffected > 0 {
+        tx.Rollback()
+        return nil, fmt.Errorf("user with the same email or mobile number already exists")
+    }
+
+    if err := tx.Create(&user).Error; err != nil {
+        tx.Rollback()
+        return nil, fmt.Errorf("error creating user: %w", err)
+    }
+
+    if err := tx.Commit().Error; err != nil {
+        tx.Rollback()
+        return nil, fmt.Errorf("error committing transaction: %w", err)
+    }
+
+    return &user, nil
+}
+
