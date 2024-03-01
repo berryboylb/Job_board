@@ -6,15 +6,26 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"job_board/jwt"
+	"log"
 )
 
 // New registers the routes and returns the router.
-func AuthRoutes(auth *Authenticator, router *gin.Engine) {
-	store := cookie.NewStore([]byte("secret"))
-	router.Use(sessions.Sessions("auth-session", store))
-	router.GET("/login", Login(auth))
-	router.GET("/callback", Callback(auth))
-	router.GET("/authorize", IsAuthenticated, Authorize)
-	router.GET("/user", jwt.Middleware(), User)
-	router.GET("/logout", Logout)
+func AuthRoutes(superRoute *gin.RouterGroup) {
+
+	authRouter := superRoute.Group("/auth")
+	{
+		store := cookie.NewStore([]byte("secret"))
+		authRouter.Use(sessions.Sessions("auth-session", store))
+		authenticator, err := New()
+		if err != nil {
+			log.Fatalf("Failed to initialize the authenticator: %v", err)
+		}
+		authRouter.POST("/login", Login(authenticator))
+		authRouter.GET("/login", Login(authenticator))
+		authRouter.GET("/callback", Callback(authenticator))
+		authRouter.GET("/authorize", IsAuthenticated, Authorize)
+		authRouter.GET("/user", jwt.Middleware(), User)
+		authRouter.GET("/logout", Logout)
+	}
+
 }
