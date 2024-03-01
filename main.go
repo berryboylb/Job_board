@@ -7,6 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
+	"golang.org/x/oauth2"
 
 	"job_board/auth"
 	"job_board/models"
@@ -22,6 +23,7 @@ func Routes(authourize *auth.Authenticator) *gin.Engine {
 	gob.Register(auth.GoogleResponse{})
 	gob.Register(auth.EmailResponse{})
 	gob.Register(auth.GithubResponse{})
+	gob.Register(oauth2.Token{})
 	gob.Register(models.AdminRole)
 	gob.Register(models.UserRole)
 	gob.Register(models.PosterRole)

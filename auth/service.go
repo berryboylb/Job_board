@@ -10,7 +10,7 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"strings"
+	"bytes"
 
 	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/gin-contrib/sessions"
@@ -84,35 +84,54 @@ func generateRandomState() (string, error) {
 	return state, nil
 }
 
-func generateToken() (*TokenResponse, error) {
+func generateToken(sub string) (*TokenResponse, error) {
 	url := "https://" + os.Getenv("AUTH0_DOMAIN") + "/oauth/token"
 
 	clientID := os.Getenv("TOKEN_CLIENT_ID")
 	clientSecret := os.Getenv("TOKEN_CLIENT_SECRET")
-	audience := "https://" + os.Getenv("AUTH0_DOMAIN") + "/api/v2/"
+	audience := os.Getenv("TOKEN_AUDIENCE")
 
 	if clientID == "" || clientSecret == "" || audience == "" {
 		return nil, fmt.Errorf("environment variable missing")
 	}
 
-	payload := strings.NewReader(fmt.Sprintf("{\"client_id\":\"%s\",\"client_secret\":\"%s\",\"audience\":\"%s\",\"grant_type\":\"client_credentials\"}", clientID, clientSecret, audience))
+	data := map[string]interface{}{
+		"client_id":     clientID,
+		"client_secret": clientSecret,
+		"audience":      audience,
+		"grant_type":    "client_credentials",
+		"sub":           sub,
+	}
 
-	req, _ := http.NewRequest("POST", url, payload)
+	payload, err := json.Marshal(data)
+	if err != nil {
+		return nil, err
+	}
 
-	req.Header.Add("content-type", "application/json")
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(payload))
+	if err != nil {
+		return nil, err
+	}
 
-	res, _ := http.DefaultClient.Do(req)
+	req.Header.Set("Content-Type", "application/json")
 
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
 	defer res.Body.Close()
+
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, err
 	}
+
 	var response TokenResponse
 	err = json.Unmarshal(body, &response)
 	if err != nil {
 		return nil, err
 	}
+
 	return &response, nil
 }
 
@@ -215,30 +234,41 @@ func handleUser(sub string, session sessions.Session) (*models.User, bool, error
 
 func CreateUser(user models.User) (*models.User, bool, error) {
 	// Start a new transaction
-    tx := database.Begin()
-    defer func() {
-        if r := recover(); r != nil {
-            tx.Rollback()
-        }
-    }()
+	tx := database.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
 
-    existingUser := &models.User{}
-    result := tx.Preload("Companies").Preload("Profile").Preload("JobApplications").FirstOrCreate(existingUser, user)
-    if result.Error != nil {
-        tx.Rollback()
-        return nil, false, fmt.Errorf("error fetching or creating user: %w", result.Error)
-    }
+	// Try to find the user
+	existingUser := &models.User{}
+	result := tx.Where(models.User{ProviderID: user.ProviderID}).First(existingUser)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			// User not found, so create it
+			if err := tx.Create(&user).Error; err != nil {
+				tx.Rollback()
+				return nil, false, fmt.Errorf("error creating user: %w", err)
+			}
+			created := true
+			// Commit the transaction
+			if err := tx.Commit().Error; err != nil {
+				return nil, false, fmt.Errorf("error committing transaction: %w", err)
+			}
+			return &user, created, nil
+		}
+		tx.Rollback()
+		return nil, false, fmt.Errorf("error fetching user: %w", result.Error)
+	}
 
-    fmt.Println("existing user", existingUser)
-    fmt.Println("user", user)
-
-    // Check if RowsAffected is 1, indicating a new record was created
-    created := result.RowsAffected == 1
-
-    // Commit the transaction
-    if err := tx.Commit().Error; err != nil {
-        return nil, false, fmt.Errorf("error committing transaction: %w", err)
-    }
-
-    return existingUser, created, nil
+	// User found, so return it
+	// You may optionally preload associations here
+	// e.g., tx.Model(existingUser).Preload("Companies").Preload("Profile").Preload("JobApplications").First(existingUser)
+	created := false
+	// Commit the transaction
+	if err := tx.Commit().Error; err != nil {
+		return nil, false, fmt.Errorf("error committing transaction: %w", err)
+	}
+	return existingUser, created, nil
 }

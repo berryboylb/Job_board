@@ -10,9 +10,11 @@ import (
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
+	"golang.org/x/oauth2"
 
 	"job_board/models"
 	"job_board/notifications"
+	"job_board/jwt"
 )
 
 func Login(auth *Authenticator) gin.HandlerFunc {
@@ -61,8 +63,9 @@ func Callback(auth *Authenticator) gin.HandlerFunc {
 			return
 		}
 
+		audience := "https://" + os.Getenv("AUTH0_DOMAIN") + "/"
 		// Exchange an authorization code for a token.
-		token, err := auth.Exchange(ctx.Request.Context(), ctx.Query("code"))
+		token, err := auth.Exchange(ctx.Request.Context(), ctx.Query("code"), oauth2.SetAuthURLParam("audience", audience))
 		if err != nil {
 			ctx.String(http.StatusUnauthorized, "Failed to exchange an authorization code for a token.")
 			return
@@ -85,7 +88,7 @@ func Callback(auth *Authenticator) gin.HandlerFunc {
 			return
 		}
 
-		session.Set("access_token", token.AccessToken)
+		session.Set("access_token", token)
 		session.Set("profile", profile)
 		session.Set("subject", sub)
 		if err := session.Save(); err != nil {
@@ -107,24 +110,21 @@ func IsAuthenticated(ctx *gin.Context) {
 }
 
 func Authorize(ctx *gin.Context) {
-	//decode the profile a normal variable
-	//populate the user with the type and the profile data
-	//i want to do a firstorCreate method to check if the user is already in the database and return it instead of creating a new one every
-	//generate a token with only read access and encode the email address of the user in it
 	session := sessions.Default(ctx)
 	subject, ok := session.Get("subject").(string)
 	if !ok {
 		ctx.String(http.StatusInternalServerError, "invalid auth0 subject")
 		return
 	}
-	fmt.Println(subject)
 	profile, isNew, err := handleUser(subject, session)
 	if err != nil {
 		ctx.String(http.StatusBadRequest, err.Error())
 		return
 	}
-
-	token, err := generateToken()
+	fmt.Println("got here")
+	userAgent := ctx.Request.Header.Get("User-Agent")
+	isMobile := strings.Contains(userAgent, "Android") || strings.Contains(userAgent, "iPhone") || strings.Contains(userAgent, "iPad")
+	token, err := jwt.GenerateJWT(profile.ProviderID, isMobile)
 	if err != nil {
 		ctx.String(http.StatusBadRequest, err.Error())
 		return
@@ -134,12 +134,11 @@ func Authorize(ctx *gin.Context) {
 		"data": gin.H{
 			"profile":      profile,
 			"subject":      subject,
-			"access_token": token.AccessToken,
+			"access_token": token,
 		},
 	})
 
 	go func() {
-		fmt.Println("see new", isNew)
 		if isNew {
 			log.Print("Try creating subscriber ")
 			subscriber := notifications.Subscriber{
