@@ -134,7 +134,7 @@ func Callback(auth *Authenticator) gin.HandlerFunc {
 		}
 
 		// Redirect to logged in page.
-		ctx.Redirect(http.StatusTemporaryRedirect, "/authorize")
+		ctx.Redirect(http.StatusTemporaryRedirect, "/api/v1/auth/authorize")
 	}
 }
 

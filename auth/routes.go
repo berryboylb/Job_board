@@ -20,7 +20,7 @@ func AuthRoutes(superRoute *gin.RouterGroup) {
 		if err != nil {
 			log.Fatalf("Failed to initialize the authenticator: %v", err)
 		}
-		authRouter.POST("/login", Login(authenticator))
+		// authRouter.POST("/login", Login(authenticator))
 		authRouter.GET("/login", Login(authenticator))
 		authRouter.GET("/callback", Callback(authenticator))
 		authRouter.GET("/authorize", IsAuthenticated, Authorize)
