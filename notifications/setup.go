@@ -1,6 +1,7 @@
 package notifications
 
 import (
+
 	novu "github.com/novuhq/go-novu/lib"
 
 	"github.com/joho/godotenv"
@@ -32,6 +33,7 @@ func CreateSubscriber(userDetails Subscriber) (*novu.SubscriberResponse, error) 
 		Email:     userDetails.Email,
 		Avatar:    userDetails.Avatar,
 		Data:      userDetails.Data,
+		// Phone:     userDetails.Phone,
 	}
 	resp, err := novuClient.SubscriberApi.Identify(ctx, userDetails.SubscriberID, subscriber)
 	if err != nil {

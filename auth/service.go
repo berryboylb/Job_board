@@ -135,114 +135,72 @@ func decoder(idToken *oidc.IDToken, sub string) (interface{}, error) {
 	return profile, nil
 }
 
-func GoogleUser(session sessions.Session) (interface{}, error) {
+func GoogleUser(session sessions.Session) (*models.User, bool, error) {
 	profile, ok := session.Get("profile").(GoogleResponse)
 	if !ok {
-		return nil, fmt.Errorf("profile data not found or not  valid for google response")
+		return nil, false, fmt.Errorf("profile data not found or not  valid for google response")
 	}
 
 	userType, ok := session.Get("type").(models.RoleAllowed)
 	if !ok {
-		return nil, fmt.Errorf("invalid type")
+		return nil, false, fmt.Errorf("invalid type")
 	}
+	subscriberId := uuid.NewString()
 	user := models.User{
-		Email:      profile.Email,
-		Name:       profile.Name,
-		Picture:    profile.Picture,
-		ProviderID: profile.Sub,
-		RoleName:   userType,
+		Email:        profile.Email,
+		Name:         profile.Name,
+		Picture:      profile.Picture,
+		ProviderID:   profile.Sub,
+		RoleName:     userType,
+		SubscriberID: subscriberId,
 	}
-
-	dbUser, isNew, err := CreateUser(user)
-	if err != nil {
-		if errors.Is(err, gorm.ErrDuplicatedKey) {
-			return nil, errors.New("invalid type for this user")
-		}
-		return nil, err
-	}
-
-	go func() {
-		if isNew {
-			//send welcome email with novu
-		}
-	}()
-
-	//create db user here
-	return dbUser, nil
+	return CreateUser(user)
 }
 
-func EmailUser(session sessions.Session) (interface{}, error) {
+func EmailUser(session sessions.Session) (*models.User, bool, error) {
 	profile, ok := session.Get("profile").(EmailResponse)
 	if !ok {
-		return nil, fmt.Errorf("profile data not found or not  valid for email response")
+		return nil, false, fmt.Errorf("profile data not found or not  valid for email response")
 	}
 
 	userType, ok := session.Get("type").(models.RoleAllowed)
 	if !ok {
-		return nil, fmt.Errorf("invalid type")
+		return nil, false, fmt.Errorf("invalid type")
 	}
-
-	fmt.Println(&profile.Email)
+	subscriberId := uuid.NewString()
 	user := models.User{
-		Email:      profile.Email,
-		Name:       profile.Name,
-		Picture:    profile.Picture,
-		ProviderID: profile.Sub,
-		RoleName:   userType,
+		Email:        profile.Email,
+		Name:         profile.Name,
+		Picture:      profile.Picture,
+		ProviderID:   profile.Sub,
+		RoleName:     userType,
+		SubscriberID: subscriberId,
 	}
-
-	dbUser, isNew, err := CreateUser(user)
-	if err != nil {
-		if errors.Is(err, gorm.ErrDuplicatedKey) {
-			return nil, errors.New("invalid type for this user")
-		}
-		return nil, err
-	}
-
-	go func() {
-		if isNew {
-			//send welcome email with novu
-		}
-	}()
-
-	//create db user here
-	return dbUser, nil
+	return CreateUser(user)
 }
 
-func GithubUser(session sessions.Session) (interface{}, error) {
+func GithubUser(session sessions.Session) (*models.User, bool, error) {
 	profile, ok := session.Get("profile").(GithubResponse)
 	if !ok {
-		return nil, fmt.Errorf("profile data not found or not  valid for email response")
+		return nil, false, fmt.Errorf("profile data not found or not  valid for email response")
 	}
 	userType, ok := session.Get("type").(models.RoleAllowed)
 	if !ok {
-		return nil, fmt.Errorf("invalid type")
+		return nil, false, fmt.Errorf("invalid type")
 	}
+	subscriberId := uuid.NewString()
 
 	user := models.User{
-		Name:       profile.Name,
-		Picture:    profile.Picture,
-		ProviderID: profile.Sub,
-		RoleName:   userType,
+		Name:         profile.Name,
+		Picture:      profile.Picture,
+		ProviderID:   profile.Sub,
+		RoleName:     userType,
+		SubscriberID: subscriberId,
 	}
-	dbUser, isNew, err := CreateUser(user)
-	if err != nil {
-		if errors.Is(err, gorm.ErrDuplicatedKey) {
-			return nil, errors.New("invalid type for this user")
-		}
-		return nil, err
-	}
-
-	go func() {
-		if isNew {
-			//send welcome email with novu
-		}
-	}()
-	//create db user here
-	return dbUser, nil
+	return CreateUser(user)
 }
 
-func handleUser(sub string, session sessions.Session) (interface{}, error) {
+func handleUser(sub string, session sessions.Session) (*models.User, bool, error) {
 	switch sub {
 	case "google-oauth2":
 		return GoogleUser(session)
@@ -251,35 +209,36 @@ func handleUser(sub string, session sessions.Session) (interface{}, error) {
 	case "github":
 		return GithubUser(session)
 	default:
-		return nil, fmt.Errorf("unsupported OAuth provider: %s", sub)
+		return nil, false, fmt.Errorf("unsupported OAuth provider: %s", sub)
 	}
 }
 
 func CreateUser(user models.User) (*models.User, bool, error) {
 	// Start a new transaction
-	tx := database.Begin()
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
-		}
-	}()
+    tx := database.Begin()
+    defer func() {
+        if r := recover(); r != nil {
+            tx.Rollback()
+        }
+    }()
 
-	existingUser := &models.User{}
-	if err := tx.FirstOrCreate(existingUser, user).Preload("Profile").Preload("JobApplications").Preload("Companies").Error; err != nil {
-		tx.Rollback() // Rollback the transaction if the balance fetch or creation fails
-		return nil, false, fmt.Errorf("error fetching or creating user: %w", err)
-	}
+    existingUser := &models.User{}
+    result := tx.Preload("Companies").Preload("Profile").Preload("JobApplications").FirstOrCreate(existingUser, user)
+    if result.Error != nil {
+        tx.Rollback()
+        return nil, false, fmt.Errorf("error fetching or creating user: %w", result.Error)
+    }
 
-	// If the user already exists, return the existing user
-	if existingUser.ID != uuid.Nil {
-		tx.Commit() // Commit the transaction as we're not creating a new user
-		return existingUser, false, nil
-	}
+    fmt.Println("existing user", existingUser)
+    fmt.Println("user", user)
 
-	// Commit the transaction
-	if err := tx.Commit().Error; err != nil {
-		return nil, false, fmt.Errorf("error committing transaction: %w", err)
-	}
+    // Check if RowsAffected is 1, indicating a new record was created
+    created := result.RowsAffected == 1
 
-	return &user, true, nil
+    // Commit the transaction
+    if err := tx.Commit().Error; err != nil {
+        return nil, false, fmt.Errorf("error committing transaction: %w", err)
+    }
+
+    return existingUser, created, nil
 }

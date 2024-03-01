@@ -10,6 +10,7 @@ import (
 
 	"job_board/auth"
 	"job_board/models"
+	
 )
 
 func Routes(authourize *auth.Authenticator) *gin.Engine {
@@ -49,7 +50,23 @@ func main() {
 
 	log.Print("Server listening on http://localhost:3000/")
 
+	// resp, err := notifications.SendNotification(notifications.Trigger{
+	// 	Name:         "berryboy",
+	// 	Email:        "phemmynesce4life@gmail.com",
+	// 	Title:        "test",
+	// 	SubscriberID: "65d952ad34a25e4f83fc27bc",
+	// 	EventID:      "welcome",
+	// 	Logo:         "https://via.placeholder.com/200x200",
+	// })
+
+	// if err != nil {
+	// 	log.Fatalf("Failed to send notification: %v", err)
+	// }
+
+	// log.Print("send notification", resp)
+
 	if err := http.ListenAndServe("0.0.0.0:3000", rtr); err != nil {
 		log.Fatalf("There was an error with the http server: %v", err)
 	}
+
 }

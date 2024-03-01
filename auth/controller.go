@@ -2,6 +2,7 @@ package auth
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -11,6 +12,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"job_board/models"
+	"job_board/notifications"
 )
 
 func Login(auth *Authenticator) gin.HandlerFunc {
@@ -116,7 +118,7 @@ func Authorize(ctx *gin.Context) {
 		return
 	}
 	fmt.Println(subject)
-	profile, err := handleUser(subject, session)
+	profile, isNew, err := handleUser(subject, session)
 	if err != nil {
 		ctx.String(http.StatusBadRequest, err.Error())
 		return
@@ -135,6 +137,45 @@ func Authorize(ctx *gin.Context) {
 			"access_token": token.AccessToken,
 		},
 	})
+
+	go func() {
+		fmt.Println("see new", isNew)
+		if isNew {
+			log.Print("Try creating subscriber ")
+			subscriber := notifications.Subscriber{
+				SubscriberID: profile.SubscriberID,
+				Name:         profile.Name,
+				Email:        profile.Email,
+				Avatar:       profile.Picture,
+				Data:         map[string]interface{}{},
+			}
+
+			if _, err := notifications.CreateSubscriber(subscriber); err != nil {
+				log.Printf("Failed to create subscriber: %v", err)
+				return
+			}
+			log.Printf("finished creating subscriber ID: %v", subscriber.SubscriberID)
+			if profile.Email != "" {
+				log.Print("Send notification ")
+				notification := notifications.Trigger{
+					Name:         profile.Name,
+					Email:        profile.Email,
+					Title:        "Welcome to Jobby",
+					SubscriberID: profile.SubscriberID,
+					EventID:      "welcome",
+					Logo:         "https://via.placeholder.com/200x200",
+				}
+
+				if _, err := notifications.SendNotification(notification); err != nil {
+					log.Printf("Failed to send notification: %v", err)
+					return
+				}
+				log.Print("Successfully sent welcome notification")
+			} else {
+				log.Print("No email found will be skipping")
+			}
+		}
+	}()
 }
 
 func User(ctx *gin.Context) {

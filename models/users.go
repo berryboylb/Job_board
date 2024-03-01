@@ -25,6 +25,7 @@ type User struct {
 	ProviderID      string           `gorm:"uniqueIndex"`
 	Profile         *Profile         `gorm:"foreignKey:UserID"`
 	MobileNumber    *string          `gorm:"type:varchar(25);default:null"` // Assuming unique mobile numbers
+	SubscriberID    string           `gorm:"default:null"`
 	JobApplications []JobApplication `gorm:"foreignKey:ApplicantID"`
 	Companies       []Company        `gorm:"foreignKey:UserID"`
 }
