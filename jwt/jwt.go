@@ -14,6 +14,7 @@ import (
 
 	"gorm.io/gorm"
 	"job_board/db"
+	"job_board/helpers"
 	"job_board/models"
 )
 
@@ -55,8 +56,13 @@ func Middleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.Request.Header.Get("Authorization")
 		if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
-			c.String(http.StatusUnauthorized, "invalid jwt")
-			c.Abort()
+			helpers.CreateResponse(c, helpers.Response{
+				Message:    "invalid jwt",
+				StatusCode: http.StatusUnauthorized,
+				Data:       nil,
+			})
+			// c.String(http.StatusUnauthorized, "invalid jwt")
+			// c.Abort()
 			return
 		}
 
@@ -70,15 +76,25 @@ func Middleware() gin.HandlerFunc {
 		})
 
 		if err != nil {
-			c.String(http.StatusBadRequest, err.Error())
-			c.Abort()
+			helpers.CreateResponse(c, helpers.Response{
+				Message:    err.Error(),
+				StatusCode: http.StatusBadRequest,
+				Data:       nil,
+			})
+			// c.String(http.StatusBadRequest, err.Error())
+			// c.Abort()
 			return
 		}
 		claims, ok := token.Claims.(jwt.MapClaims)
 
 		if !ok || !token.Valid {
-			c.String(http.StatusBadRequest, "invalid jwt")
-			c.Abort()
+			helpers.CreateResponse(c, helpers.Response{
+				Message:    "invalid jwt",
+				StatusCode: http.StatusBadRequest,
+				Data:       nil,
+			})
+			// c.String(http.StatusBadRequest, "invalid jwt")
+			// c.Abort()
 			return
 		}
 
@@ -94,8 +110,13 @@ func Middleware() gin.HandlerFunc {
 
 		var user models.User
 		if err := database.Preload("Profile").Preload("Companies").Where(&models.User{ProviderID: providerID}).First(&user).Error; err != nil {
-			c.String(http.StatusBadRequest, err.Error())
-			c.Abort()
+			helpers.CreateResponse(c, helpers.Response{
+				Message:    err.Error(),
+				StatusCode: http.StatusBadRequest,
+				Data:       nil,
+			})
+			// c.String(http.StatusBadRequest, err.Error())
+			// c.Abort()
 			return
 		}
 		session.Set(providerID, user)

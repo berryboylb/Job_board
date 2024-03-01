@@ -16,4 +16,5 @@ func CreateResponse(ctx *gin.Context, response Response) {
 		"data":       response.Data,
 		"statusCode": response.StatusCode,
 	})
+	ctx.Abort()
 }

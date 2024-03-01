@@ -12,16 +12,21 @@ import (
 	"github.com/gin-gonic/gin"
 	"golang.org/x/oauth2"
 
+	"job_board/helpers"
+	"job_board/jwt"
 	"job_board/models"
 	"job_board/notifications"
-	"job_board/jwt"
 )
 
 func Login(auth *Authenticator) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		userType := ctx.Query("type")
 		if userType == "" {
-			ctx.String(http.StatusBadRequest, "user type is required")
+			helpers.CreateResponse(ctx, helpers.Response{
+				Message:    "user type is required",
+				StatusCode: http.StatusBadRequest,
+				Data:       nil,
+			})
 			return
 		}
 
@@ -32,13 +37,21 @@ func Login(auth *Authenticator) gin.HandlerFunc {
 		case string(models.UserRole):
 			role = models.UserRole
 		default:
-			ctx.String(http.StatusBadRequest, fmt.Sprintf("user type can be either %v or %v", string(models.PosterRole), string(models.UserRole)))
+			helpers.CreateResponse(ctx, helpers.Response{
+				Message:    fmt.Sprintf("user type can be either %v or %v", string(models.PosterRole), string(models.UserRole)),
+				StatusCode: http.StatusBadRequest,
+				Data:       nil,
+			})
 			return
 		}
 
 		state, err := generateRandomState()
 		if err != nil {
-			ctx.String(http.StatusInternalServerError, err.Error())
+			helpers.CreateResponse(ctx, helpers.Response{
+				Message:    err.Error(),
+				StatusCode: http.StatusInternalServerError,
+				Data:       nil,
+			})
 			return
 		}
 
@@ -47,7 +60,11 @@ func Login(auth *Authenticator) gin.HandlerFunc {
 		session.Set("state", state)
 		session.Set("type", role)
 		if err := session.Save(); err != nil {
-			ctx.String(http.StatusInternalServerError, err.Error())
+			helpers.CreateResponse(ctx, helpers.Response{
+				Message:    err.Error(),
+				StatusCode: http.StatusInternalServerError,
+				Data:       nil,
+			})
 			return
 		}
 
@@ -59,7 +76,11 @@ func Callback(auth *Authenticator) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		session := sessions.Default(ctx)
 		if ctx.Query("state") != session.Get("state") {
-			ctx.String(http.StatusBadRequest, "Invalid state parameter.")
+			helpers.CreateResponse(ctx, helpers.Response{
+				Message:    "Invalid state parameter.",
+				StatusCode: http.StatusBadRequest,
+				Data:       nil,
+			})
 			return
 		}
 
@@ -67,13 +88,21 @@ func Callback(auth *Authenticator) gin.HandlerFunc {
 		// Exchange an authorization code for a token.
 		token, err := auth.Exchange(ctx.Request.Context(), ctx.Query("code"), oauth2.SetAuthURLParam("audience", audience))
 		if err != nil {
-			ctx.String(http.StatusUnauthorized, "Failed to exchange an authorization code for a token.")
+			helpers.CreateResponse(ctx, helpers.Response{
+				Message:    "Failed to exchange an authorization code for a token.",
+				StatusCode: http.StatusUnauthorized,
+				Data:       nil,
+			})
 			return
 		}
 
 		idToken, err := auth.VerifyIDToken(ctx.Request.Context(), token)
 		if err != nil {
-			ctx.String(http.StatusInternalServerError, "Failed to verify ID Token.")
+			helpers.CreateResponse(ctx, helpers.Response{
+				Message:    "Failed to verify ID Token.",
+				StatusCode: http.StatusInternalServerError,
+				Data:       nil,
+			})
 			return
 		}
 		sub := strings.Split(idToken.Subject, "|")[0]
@@ -84,7 +113,11 @@ func Callback(auth *Authenticator) gin.HandlerFunc {
 		// }
 		profile, err := decoder(idToken, sub)
 		if err != nil {
-			ctx.String(http.StatusInternalServerError, err.Error())
+			helpers.CreateResponse(ctx, helpers.Response{
+				Message:    err.Error(),
+				StatusCode: http.StatusInternalServerError,
+				Data:       nil,
+			})
 			return
 		}
 
@@ -92,7 +125,11 @@ func Callback(auth *Authenticator) gin.HandlerFunc {
 		session.Set("profile", profile)
 		session.Set("subject", sub)
 		if err := session.Save(); err != nil {
-			ctx.String(http.StatusInternalServerError, err.Error())
+			helpers.CreateResponse(ctx, helpers.Response{
+				Message:    err.Error(),
+				StatusCode: http.StatusInternalServerError,
+				Data:       nil,
+			})
 			return
 		}
 
@@ -113,12 +150,20 @@ func Authorize(ctx *gin.Context) {
 	session := sessions.Default(ctx)
 	subject, ok := session.Get("subject").(string)
 	if !ok {
-		ctx.String(http.StatusInternalServerError, "invalid auth0 subject")
+		helpers.CreateResponse(ctx, helpers.Response{
+			Message:    "invalid auth0 subject",
+			StatusCode: http.StatusBadRequest,
+			Data:       nil,
+		})
 		return
 	}
 	profile, isNew, err := handleUser(subject, session)
 	if err != nil {
-		ctx.String(http.StatusBadRequest, err.Error())
+		helpers.CreateResponse(ctx, helpers.Response{
+			Message:    err.Error(),
+			StatusCode: http.StatusBadRequest,
+			Data:       nil,
+		})
 		return
 	}
 	fmt.Println("got here")
@@ -126,7 +171,11 @@ func Authorize(ctx *gin.Context) {
 	isMobile := strings.Contains(userAgent, "Android") || strings.Contains(userAgent, "iPhone") || strings.Contains(userAgent, "iPad")
 	token, err := jwt.GenerateJWT(profile.ProviderID, isMobile)
 	if err != nil {
-		ctx.String(http.StatusBadRequest, err.Error())
+		helpers.CreateResponse(ctx, helpers.Response{
+			Message:    err.Error(),
+			StatusCode: http.StatusBadRequest,
+			Data:       nil,
+		})
 		return
 	}
 	//save to db and if user don't exist redirect to token
@@ -193,7 +242,11 @@ func Protect(ctx *gin.Context) {
 func Logout(ctx *gin.Context) {
 	logoutUrl, err := url.Parse("https://" + os.Getenv("AUTH0_DOMAIN") + "/v2/logout")
 	if err != nil {
-		ctx.String(http.StatusInternalServerError, err.Error())
+		helpers.CreateResponse(ctx, helpers.Response{
+			Message:    err.Error(),
+			StatusCode: http.StatusInternalServerError,
+			Data:       nil,
+		})
 		return
 	}
 
@@ -204,7 +257,11 @@ func Logout(ctx *gin.Context) {
 
 	returnTo, err := url.Parse(scheme + "://" + ctx.Request.Host)
 	if err != nil {
-		ctx.String(http.StatusInternalServerError, err.Error())
+		helpers.CreateResponse(ctx, helpers.Response{
+			Message:    err.Error(),
+			StatusCode: http.StatusInternalServerError,
+			Data:       nil,
+		})
 		return
 	}
 
