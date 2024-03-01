@@ -243,7 +243,7 @@ func CreateUser(user models.User) (*models.User, bool, error) {
 
 	// Try to find the user
 	existingUser := &models.User{}
-	result := tx.Where(models.User{ProviderID: user.ProviderID}).First(existingUser)
+	result := tx.Preload("Profile").Where(models.User{ProviderID: user.ProviderID}).First(existingUser)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			// User not found, so create it
