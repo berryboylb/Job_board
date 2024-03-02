@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -25,6 +26,7 @@ func RolesMiddleware(roles []string) gin.HandlerFunc {
 			return
 		}
 
+		fmt.Println(user, roles)
 		// Convert user role to lowercase for case-insensitive comparison
 		userRole := strings.ToLower(string(user.RoleName))
 

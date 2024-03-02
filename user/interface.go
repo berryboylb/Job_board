@@ -25,5 +25,6 @@ type Admin struct {
     Email        string `json:"email" binding:"required,email"`
     Picture      string `json:"picture" binding:"omitempty"`
     MobileNumber string `json:"mobile_number" binding:"required"`
+	Password string `json:"password" binding:"required,min=5"`
 }
 

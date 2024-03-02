@@ -5,14 +5,14 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
-	_ "job_board/models"
+	"job_board/models"
 )
 
 func main() {
 	if err := godotenv.Load(); err != nil {
 		log.Fatalf("Failed to load the env vars: %v", err)
 	}
-	// models.MigrateDb()
+	models.MigrateDb()
 
 	app := gin.New()
 

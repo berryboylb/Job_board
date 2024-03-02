@@ -243,7 +243,7 @@ func LoginAdmin(ctx *gin.Context) {
 		return
 	}
 
-	newuser, err := user.GetSingleUser(models.User{
+	newuser, err := user.GetAltSingleUser(models.User{
 		Email: req.Email,
 	})
 
@@ -273,6 +273,11 @@ func LoginAdmin(ctx *gin.Context) {
 		})
 		return
 	}
+	helpers.CreateResponse(ctx, helpers.Response{
+		Message:    "Successfully sent OTP",
+		StatusCode: http.StatusOK,
+		Data:       nil,
+	})
 	go func() {
 		otp := GenerateOtp(4)
 		expiryTime := time.Now().Add(24 * time.Hour) //  24 hours
@@ -304,12 +309,9 @@ func LoginAdmin(ctx *gin.Context) {
 			log.Printf("Failed to send  otp notification: %v", err)
 			return
 		}
+		log.Printf("Send otp notification: %v ", otp)
 	}()
-	helpers.CreateResponse(ctx, helpers.Response{
-		Message:    "Successfully sent OTP",
-		StatusCode: http.StatusOK,
-		Data:       nil,
-	})
+
 }
 
 func ConfirmLoginAdmin(ctx *gin.Context) {
@@ -339,6 +341,7 @@ func ConfirmLoginAdmin(ctx *gin.Context) {
 		})
 		return
 	}
+	fmt.Println("GOT HERE", dbUser.ProviderID)
 	userAgent := ctx.Request.Header.Get("User-Agent")
 	isMobile := strings.Contains(userAgent, "Android") || strings.Contains(userAgent, "iPhone") || strings.Contains(userAgent, "iPad")
 	token, err := jwt.GenerateJWT(dbUser.ProviderID, isMobile)

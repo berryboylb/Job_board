@@ -21,34 +21,45 @@ const (
 
 // user struct
 type User struct {
-	gorm.Model
-	ID                uuid.UUID        `gorm:"type:uuid;default:uuid_generate_v4();primaryKey"`
-	Name              string           // Assuming no special column name needed
-	Email             string           `json:"email"`
-	Picture           string           `json:"picture"`
-	RoleName          RoleAllowed      `json:"role" sql:"type:role_name"`
-	ProviderID        string           `gorm:"uniqueIndex"`
-	Profile           *Profile         `gorm:"foreignKey:UserID"`
-	MobileNumber      *string          `gorm:"type:varchar(25);default:null"` // Assuming unique mobile numbers
-	SubscriberID      string           `gorm:"default:null"`
-	JobApplications   []JobApplication `gorm:"foreignKey:ApplicantID"`
-	Companies         []Company        `gorm:"foreignKey:UserID"`
-	VerificationToken string
-	ExpiresAt         time.Time
-	Password          string `gorm:"default:null"`
+    gorm.Model
+    ID                uuid.UUID        `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id"`
+    Name              string           `json:"name"`
+    Email             string           `json:"email"`
+    Picture           string           `json:"picture"`
+    RoleName          RoleAllowed      `json:"role" sql:"type:role_name"`
+    ProviderID        string           `gorm:"uniqueIndex" json:"provider_id"`
+    Profile           *Profile         `gorm:"foreignKey:UserID" json:"profile"`
+    MobileNumber      *string          `gorm:"type:varchar(25);default:null" json:"mobile_number"`
+    SubscriberID      string           `gorm:"default:null" json:"subscriber_id"`
+    JobApplications   []JobApplication `gorm:"foreignKey:ApplicantID" json:"job_applications"`
+    Companies         []Company        `gorm:"foreignKey:UserID" json:"companies"`
+    VerificationToken string           `json:"verification_token"`
+    ExpiresAt         time.Time        `json:"expires_at"`
+    Password          string           `gorm:"default:null" json:"-"`
 }
+
 
 func (u *User) BeforeCreate(tx *gorm.DB) (err error) {
-    if u.RoleName == SuperAdminRole || u.RoleName == AdminRole {
-        // Check if the password is not empty
-        if u.Password != "" {
-            // Hash Password
-            u.Password, err = helpers.HashPassword(u.Password, 14)
-            if err != nil {
-                return err
-            }
-        }
-    }
-    return nil
-}
+	if u.RoleName == SuperAdminRole {
+		// Check if the password is not empty
+		if u.Password != "" {
+			// Hash Password
+			u.Password, err = helpers.HashPassword(u.Password, 14)
+			if err != nil {
+				return err
+			}
+		}
+	}
 
+	if u.RoleName == AdminRole {
+		// Check if the password is not empty
+		if u.Password != "" {
+			// Hash Password
+			u.Password, err = helpers.HashPassword(u.Password, 10)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}

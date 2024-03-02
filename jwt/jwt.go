@@ -119,7 +119,7 @@ func Middleware() gin.HandlerFunc {
 			// c.Abort()
 			return
 		}
-		session.Set(providerID, user)
+		// session.Set(providerID, user)
 		c.Set("claims", claims)
 		c.Set("user", user)
 		c.Next()

@@ -16,9 +16,8 @@ import (
 	"job_board/notifications"
 )
 
+func init() {
 
-func init(){
-	
 }
 
 func User(ctx *gin.Context) {
@@ -104,6 +103,8 @@ func CreateAdmin(ctx *gin.Context) {
 		RoleName:     models.AdminRole,
 		ProviderID:   providerID,
 		SubscriberID: subscriberID,
+		Password:     req.Password,
+		Email:        req.Email,
 	}
 
 	user, err := CreateAdminUser(newUser)
@@ -143,10 +144,11 @@ func CreateAdmin(ctx *gin.Context) {
 			Email:        user.Email,
 			Title:        "You have the power",
 			SubscriberID: user.SubscriberID,
-			EventID:      "admin-welcome",
+			EventID:      "admin",
 			Logo:         "https://via.placeholder.com/200x200",
 			Data: map[string]interface{}{
 				"companyName": "Jobby",
+				"password":    req.Password,
 			},
 		}
 

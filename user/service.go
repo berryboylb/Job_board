@@ -55,6 +55,8 @@ func createAdmin() {
 	result := tx.Where(&models.User{RoleName: models.SuperAdminRole}).First(existingUser)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			subscriberID := uuid.NewString()
+			providerID := "superadmin|" + subscriberID
 			user := models.User{
 				Name:         adminName,
 				Email:        adminEmail,
@@ -62,6 +64,8 @@ func createAdmin() {
 				Password:     adminPassword,
 				MobileNumber: &adminMobileNumber,
 				RoleName:     models.SuperAdminRole, // Ensure the role is set to SuperAdminRole
+				ProviderID:   providerID,
+				SubscriberID: subscriberID,
 			}
 
 			if err := tx.Create(&user).Error; err != nil {
@@ -86,6 +90,14 @@ func createAdmin() {
 func GetSingleUser(filter models.User) (*models.User, error) {
 	var user models.User
 	if err := database.Preload("Profile").Preload("Companies").Preload("JobApplications").Where(&filter).First(&user).Error; err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
+func GetAltSingleUser(filter models.User) (*models.User, error) {
+	var user models.User
+	if err := database.Where(&filter).First(&user).Error; err != nil {
 		return nil, err
 	}
 	return &user, nil
@@ -203,6 +215,18 @@ func CreateAdminUser(user models.User) (*models.User, error) {
 	existingUser := &models.User{}
 	result := tx.Preload("Profile").Preload("Companies").Preload("JobApplications").Where("mobile_number = ? OR email = ?", user.MobileNumber, user.Email).First(existingUser)
 	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			if err := tx.Create(&user).Error; err != nil {
+				tx.Rollback()
+				return nil, fmt.Errorf("error creating user: %w", err)
+			}
+
+			if err := tx.Commit().Error; err != nil {
+				tx.Rollback()
+				return nil, fmt.Errorf("error committing transaction: %w", err)
+			}
+			return &user, nil
+		}
 		tx.Rollback()
 		return nil, fmt.Errorf("error fetching user: %w", result.Error)
 	}
@@ -210,16 +234,6 @@ func CreateAdminUser(user models.User) (*models.User, error) {
 	if result.RowsAffected > 0 {
 		tx.Rollback()
 		return nil, fmt.Errorf("user with the same email or mobile number already exists")
-	}
-
-	if err := tx.Create(&user).Error; err != nil {
-		tx.Rollback()
-		return nil, fmt.Errorf("error creating user: %w", err)
-	}
-
-	if err := tx.Commit().Error; err != nil {
-		tx.Rollback()
-		return nil, fmt.Errorf("error committing transaction: %w", err)
 	}
 
 	return &user, nil
