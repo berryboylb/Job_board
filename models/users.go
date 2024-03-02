@@ -6,6 +6,8 @@ import (
 	"gorm.io/gorm"
 
 	"time"
+
+	"job_board/helpers"
 )
 
 type RoleAllowed string
@@ -37,9 +39,16 @@ type User struct {
 }
 
 func (u *User) BeforeCreate(tx *gorm.DB) (err error) {
-
-	if u.RoleName == SuperAdminRole || u.RoleName == AdminRole {
-		//HASH Password
-	}
-	return
+    if u.RoleName == SuperAdminRole || u.RoleName == AdminRole {
+        // Check if the password is not empty
+        if u.Password != "" {
+            // Hash Password
+            u.Password, err = helpers.HashPassword(u.Password, 14)
+            if err != nil {
+                return err
+            }
+        }
+    }
+    return nil
 }
+

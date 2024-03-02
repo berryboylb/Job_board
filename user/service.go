@@ -37,6 +37,7 @@ func init() {
 		log.Fatal("Error loading super admin details")
 	}
 	database = db.GetDB()
+	createAdmin()
 }
 
 func createAdmin() {
@@ -52,35 +53,33 @@ func createAdmin() {
 	existingUser := &models.User{}
 	result := tx.Where(&models.User{RoleName: models.SuperAdminRole}).First(existingUser)
 	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			user := models.User{
+				Name:         adminName,
+				Email:        adminEmail,
+				Picture:      adminPicture,
+				Password:     adminPassword,
+				MobileNumber: &adminMobileNumber,
+				RoleName:     models.SuperAdminRole, // Ensure the role is set to SuperAdminRole
+			}
+
+			if err := tx.Create(&user).Error; err != nil {
+				tx.Rollback()
+				log.Panicf("failed to create admin user: %s", err)
+			}
+
+			if err := tx.Commit().Error; err != nil {
+				tx.Rollback()
+				log.Printf("error committing transaction: %v", err)
+				return
+			}
+			log.Print("created admin")
+			return
+		}
 		tx.Rollback()
-		log.Printf("error fetching admin user: %w", result.Error)
+		log.Printf("error fetching admin user: %v", result.Error)
 		return
 	}
-
-	if result.RowsAffected > 0 {
-		tx.Rollback()
-		log.Printf("admin found, will be skipping")
-		return
-	}
-
-	user := models.User{
-		Name:         adminName,
-		Email:        adminEmail,	
-		Picture:      adminPicture,
-		Password: admin
-	}
-	if err := tx.Create(&user).Error; err != nil {
-		tx.Rollback()
-		log.Panicf("failed to create admin user: %s", err)
-	}
-
-	if err := tx.Commit().Error; err != nil {
-		tx.Rollback()
-		log.Printf("error committing transaction: %w", err)
-		return
-	}
-	log.Print("created admin")
-
 }
 
 func GetSingleUser(filter models.User) (*models.User, error) {
