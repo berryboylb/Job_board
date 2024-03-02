@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
@@ -16,6 +17,7 @@ import (
 	"job_board/jwt"
 	"job_board/models"
 	"job_board/notifications"
+	"job_board/user"
 )
 
 func Login(auth *Authenticator) gin.HandlerFunc {
@@ -228,6 +230,91 @@ func Authorize(ctx *gin.Context) {
 	}()
 }
 
+func LoginAdmin(ctx *gin.Context) {
+	var req Admin
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		helpers.CreateResponse(ctx, helpers.Response{
+			Message:    err.Error(),
+			StatusCode: http.StatusBadRequest,
+			Data:       nil,
+		})
+		return
+	}
+
+	newuser, err := user.GetSingleUser(models.User{
+		Email: req.Email,
+	})
+
+	if err != nil {
+		helpers.CreateResponse(ctx, helpers.Response{
+			Message:    err.Error(),
+			StatusCode: http.StatusBadRequest,
+			Data:       nil,
+		})
+		return
+	}
+	if newuser.RoleName != models.AdminRole && newuser.RoleName != models.SuperAdminRole {
+		helpers.CreateResponse(ctx, helpers.Response{
+			Message:    "Unauthorized access",
+			StatusCode: http.StatusUnauthorized,
+			Data:       nil,
+		})
+		return
+	}
+
+	isMatch := helpers.CheckPasswordHash(req.Password, newuser.Password)
+	if !isMatch {
+		helpers.CreateResponse(ctx, helpers.Response{
+			Message:    "Invalid credentials",
+			StatusCode: http.StatusBadRequest,
+			Data:       nil,
+		})
+		return
+	}
+	go func() {
+		otp := GenerateOtp(4)
+		expiryTime := time.Now().Add(24 * time.Hour) //  24 hours
+
+		_, err = user.UpdateSingleUser(newuser.ID, models.User{
+			VerificationToken: otp,
+			ExpiresAt:         expiryTime,
+		})
+		if err != nil {
+			log.Println("Failed to update user:", err)
+			return
+		}
+
+		log.Print("Send otp notification ")
+		notification := notifications.Trigger{
+			Name:         newuser.Name,
+			Email:        newuser.Email,
+			Title:        "You have the power",
+			SubscriberID: newuser.SubscriberID,
+			EventID:      "otp",
+			Logo:         "https://via.placeholder.com/200x200",
+			Data: map[string]interface{}{
+				"companyName": "Jobby",
+				"otp":         otp,
+			},
+		}
+
+		if _, err := notifications.SendNotification(notification); err != nil {
+			log.Printf("Failed to send  otp notification: %v", err)
+			return
+		}
+	}()
+	helpers.CreateResponse(ctx, helpers.Response{
+		Message:    "Successfully sent OTP",
+		StatusCode: http.StatusOK,
+		Data:       nil,
+	})
+}
+
+func ConfirmLoginAdmin(ctx *gin.Context) {
+	ctx.JSON(http.StatusOK, gin.H{
+		"data": "hello",
+	})
+}
 
 func Protect(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{

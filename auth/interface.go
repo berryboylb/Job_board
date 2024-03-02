@@ -54,3 +54,12 @@ type GithubResponse struct {
 	Sub       string    `json:"sub"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
+
+type Admin struct {
+	Email    string `json:"email" binding:"required,email"`
+	Password string `json:"password" binding:"required,min=5"`
+}
+
+type OtpDto struct {
+	Otp string `json:"otp" binding:"required,min=4"`
+}

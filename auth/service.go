@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
 	"encoding/base64"
@@ -10,7 +11,8 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"bytes"
+	mrand "math/rand"
+	"time"
 
 	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/gin-contrib/sessions"
@@ -271,4 +273,22 @@ func CreateUser(user models.User) (*models.User, bool, error) {
 		return nil, false, fmt.Errorf("error committing transaction: %w", err)
 	}
 	return existingUser, created, nil
+}
+
+const charset = "0123456789"
+
+var seededRand *mrand.Rand = mrand.New(
+	mrand.NewSource(time.Now().UnixNano()))
+
+func StringWithCharset(length int, charset string) string {
+	b := make([]byte, length)
+	for i := range b {
+		b[i] = charset[seededRand.Intn(len(charset))]
+	}
+	fmt.Println(string(b), "otp")
+	return string(b)
+}
+
+func GenerateOtp(length int) string {
+	return StringWithCharset(length, charset)
 }
