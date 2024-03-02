@@ -141,6 +141,8 @@ func Callback(auth *Authenticator) gin.HandlerFunc {
 func IsAuthenticated(ctx *gin.Context) {
 	if sessions.Default(ctx).Get("profile") == nil {
 		ctx.Redirect(http.StatusSeeOther, "/")
+		return
+
 	} else {
 		ctx.Next()
 	}
@@ -226,12 +228,6 @@ func Authorize(ctx *gin.Context) {
 	}()
 }
 
-func User(ctx *gin.Context) {
-	//i just want to get the user data
-	ctx.JSON(http.StatusOK, gin.H{
-		"data": "user data",
-	})
-}
 
 func Protect(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{
