@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -12,6 +13,7 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/oauth2"
+	"gorm.io/gorm"
 
 	"job_board/helpers"
 	"job_board/jwt"
@@ -311,9 +313,59 @@ func LoginAdmin(ctx *gin.Context) {
 }
 
 func ConfirmLoginAdmin(ctx *gin.Context) {
-	ctx.JSON(http.StatusOK, gin.H{
-		"data": "hello",
+	var req OtpDto
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		helpers.CreateResponse(ctx, helpers.Response{
+			Message:    err.Error(),
+			StatusCode: http.StatusBadRequest,
+			Data:       nil,
+		})
+		return
+	}
+	dbUser, err := user.GetVerificationToken(req.Otp)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			helpers.CreateResponse(ctx, helpers.Response{
+				Message:    "Invalid otp try login again.",
+				StatusCode: http.StatusBadRequest,
+				Data:       nil,
+			})
+			return
+		}
+		helpers.CreateResponse(ctx, helpers.Response{
+			Message:    err.Error(),
+			StatusCode: http.StatusBadRequest,
+			Data:       nil,
+		})
+		return
+	}
+	userAgent := ctx.Request.Header.Get("User-Agent")
+	isMobile := strings.Contains(userAgent, "Android") || strings.Contains(userAgent, "iPhone") || strings.Contains(userAgent, "iPad")
+	token, err := jwt.GenerateJWT(dbUser.ProviderID, isMobile)
+	if err != nil {
+		helpers.CreateResponse(ctx, helpers.Response{
+			Message:    err.Error(),
+			StatusCode: http.StatusBadRequest,
+			Data:       nil,
+		})
+		return
+	}
+	helpers.CreateResponse(ctx, helpers.Response{
+		Message:    "Successfully loggedIn",
+		StatusCode: http.StatusOK,
+		Data:       token,
 	})
+
+	go func() {
+		_, err = user.UpdateSingleUser(dbUser.ID, models.User{
+			VerificationToken: "nil",
+			ExpiresAt:         time.Time{},
+		})
+		if err != nil {
+			log.Println("Failed to update user:", err)
+			return
+		}
+	}()
 }
 
 func Protect(ctx *gin.Context) {

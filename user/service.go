@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
@@ -222,4 +223,16 @@ func CreateAdminUser(user models.User) (*models.User, error) {
 	}
 
 	return &user, nil
+}
+
+func GetVerificationToken(token string) (models.User, error) {
+	var user models.User
+	err := database.Where("verification_token = ?", token).Where("expires_at >= ?", time.Now()).First(&user).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return models.User{}, errors.New("invalid or expired token, please request another token")
+		}
+		return models.User{}, err
+	}
+	return user, nil
 }
