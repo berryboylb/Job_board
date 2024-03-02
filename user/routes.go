@@ -15,10 +15,10 @@ func UserRoutes(superRoute *gin.RouterGroup) {
 	{
 		userRouter.Use(jwt.Middleware())
 		userRouter.GET("/", middleware.RolesMiddleware([]string{string(models.AdminRole)}), GetAllUsers)
-		userRouter.GET("/user", User)
 		userRouter.POST("/", middleware.RolesMiddleware([]string{string(models.AdminRole)}), CreateAdmin)
-		userRouter.PATCH("/", UpdateUser)
-		userRouter.DELETE("/", DeleteUser)
+		userRouter.GET("/user", User)
+		userRouter.PATCH("/user", UpdateUser)
+		userRouter.DELETE("/user", DeleteUser)
 	}
 
 }

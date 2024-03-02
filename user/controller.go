@@ -1,10 +1,13 @@
 package user
 
 import (
+	"fmt"
+
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
+	"io"
 	"log"
 	"net/http"
 
@@ -12,6 +15,11 @@ import (
 	"job_board/models"
 	"job_board/notifications"
 )
+
+
+func init(){
+	
+}
 
 func User(ctx *gin.Context) {
 	//i just want to get the user data
@@ -44,7 +52,7 @@ func User(ctx *gin.Context) {
 }
 
 func GetAllUsers(ctx *gin.Context) {
-	query := UserDetails{
+	query := FilterDetails{
 		Name:         ctx.Query("name"),
 		Email:        ctx.Query("email"),
 		Picture:      ctx.Query("picture"),
@@ -172,17 +180,27 @@ func UpdateUser(ctx *gin.Context) {
 		return
 	}
 
+	fmt.Println("GOT HERE")
+
 	var req UserDetails
 	if err := ctx.ShouldBindJSON(&req); err != nil {
+		if err == io.EOF {
+			helpers.CreateResponse(ctx, helpers.Response{
+				Message:    fmt.Sprintf("please add least one value: %v", err.Error()),
+				StatusCode: http.StatusBadRequest,
+				Data:       nil,
+			})
+			return
+		}
 		helpers.CreateResponse(ctx, helpers.Response{
 			Message:    err.Error(),
-			StatusCode: http.StatusInternalServerError,
+			StatusCode: http.StatusBadRequest,
 			Data:       nil,
 		})
 		return
 	}
-	session := sessions.Default(ctx)
 	newUser, err := UpdateSingleUser(user.ID, req)
+	session := sessions.Default(ctx)
 	session.Set(newUser.ProviderID, newUser)
 	if err != nil {
 		helpers.CreateResponse(ctx, helpers.Response{

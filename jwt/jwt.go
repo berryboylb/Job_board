@@ -109,7 +109,7 @@ func Middleware() gin.HandlerFunc {
 		}
 
 		var user models.User
-		if err := database.Preload("Profile").Preload("Companies").Where(&models.User{ProviderID: providerID}).First(&user).Error; err != nil {
+		if err := database.Preload("Profile").Preload("Companies").Preload("JobApplications").Where(&models.User{ProviderID: providerID}).First(&user).Error; err != nil {
 			helpers.CreateResponse(c, helpers.Response{
 				Message:    err.Error(),
 				StatusCode: http.StatusBadRequest,
