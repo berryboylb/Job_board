@@ -3,14 +3,13 @@ package middleware
 import (
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 
 	"job_board/models"
 )
 
-func RolesMiddleware(roles []string) gin.HandlerFunc {
+func RolesMiddleware(roles []models.RoleAllowed) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		value, exists := c.Get("user")
 		if !exists {
@@ -28,11 +27,11 @@ func RolesMiddleware(roles []string) gin.HandlerFunc {
 
 		fmt.Println(user, roles)
 		// Convert user role to lowercase for case-insensitive comparison
-		userRole := strings.ToLower(string(user.RoleName))
+		userRole := user.RoleName
 
 		// Check if user role matches any of the allowed roles
 		for _, allowedRole := range roles {
-			if strings.ToLower(allowedRole) == userRole {
+			if allowedRole == userRole {
 				c.Next()
 				return
 			}

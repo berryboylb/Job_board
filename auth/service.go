@@ -262,7 +262,6 @@ func CreateUser(user models.User) (*models.User, bool, error) {
 		if err := tx.Commit().Error; err != nil {
 			return nil, false, fmt.Errorf("error committing transaction: %w", err)
 		}
-		fmt.Println("THE TWO IDS ARE THE SAME",  existingUser.ProviderID, user.ProviderID )
 		if existingUser.ProviderID != user.ProviderID {
 			return nil, false, fmt.Errorf("error returning user: Provider ID mismatch for known user, please use a different provider or a different email %v", nil)
 		}

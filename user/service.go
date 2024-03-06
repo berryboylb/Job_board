@@ -131,35 +131,35 @@ func GetUsers(filter FilterDetails, pageNumber string, pageSize string) ([]model
 	}
 
 	if filter.Email != "" {
-		db = db.Where("email = ?", filter.Email)
+		db = db.Unscoped().Where("email = ?", filter.Email)
 	}
 
 	if filter.Picture != "" {
-		db = db.Where("picture LIKE ?", "%"+filter.Picture+"%")
+		db = db.Unscoped().Where("picture LIKE ?", "%"+filter.Picture+"%")
 	}
 
 	if filter.MobileNumber != "" {
-		db = db.Where("mobile_number LIKE ?", "%"+filter.MobileNumber+"%")
+		db = db.Unscoped().Where("mobile_number LIKE ?", "%"+filter.MobileNumber+"%")
 	}
 
 	if filter.RoleName != "" {
-		db = db.Where("role_name = ?", filter.Email)
+		db = db.Unscoped().Where("role_name = ?", filter.Email)
 	}
 
 	if filter.ProviderID != "" {
-		db = db.Where("provider_id = ?", filter.ProviderID)
+		db = db.Unscoped().Where("provider_id = ?", filter.ProviderID)
 	}
 
 	if filter.SubscriberID != "" {
-		db = db.Where("subscriber_id = ?", filter.SubscriberID)
+		db = db.Unscoped().Where("subscriber_id = ?", filter.SubscriberID)
 	}
 
-	if err := db.Count(&total).Error; err != nil {
+	if err := db.Unscoped().Count(&total).Error; err != nil {
 		log.Println("Error counting books:", err)
 		return nil, 0, 0, 0, err
 	}
 
-	if err := db.Preload("Profile").Preload("Companies").Preload("JobApplications").Unscoped().Limit(perPage).Offset(offset).Find(&users).Error; err != nil {
+	if err := db.Unscoped().Preload("Profile").Preload("Companies").Preload("JobApplications").Limit(perPage).Offset(offset).Find(&users).Error; err != nil {
 		log.Println("Error finding books:", err)
 		return nil, 0, 0, 0, err
 	}
@@ -263,7 +263,7 @@ func Reinstate(user_id string) (*models.User, error) {
 		}
 	}()
 	existingUser := &models.User{}
-	result := tx.Preload("Profile").Unscoped().Where(&models.User{ID: userID}).First(existingUser)
+	result := tx.Unscoped().Where(&models.User{ID: userID}).First(existingUser)
 	if result.Error != nil {
 		tx.Rollback()
 		return nil, fmt.Errorf("error fetching user: %w", result.Error)
@@ -275,7 +275,7 @@ func Reinstate(user_id string) (*models.User, error) {
 	}
 
 	// Assuming `user` is the soft-deleted record you want to undelete
-	if err := database.Model(&existingUser).Unscoped().Update("deleted_at", gorm.Expr("NULL")).Error; err != nil {
+	if err := database.Model(&existingUser).Unscoped().Update("deleted_at", nil).Error; err != nil {
 		tx.Rollback()
 		return nil, err
 	}

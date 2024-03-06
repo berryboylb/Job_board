@@ -262,7 +262,7 @@ func ReinStateAccount(ctx *gin.Context) {
 	user, err := Reinstate(userID)
 	if err != nil {
 		helpers.CreateResponse(ctx, helpers.Response{
-			Message:    "successfully deleted user",
+			Message:    err.Error(),
 			StatusCode: http.StatusBadRequest,
 			Data:       nil,
 		})
@@ -274,3 +274,4 @@ func ReinStateAccount(ctx *gin.Context) {
 		Data:       user,
 	})
 }
+
