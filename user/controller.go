@@ -256,3 +256,21 @@ func DeleteUser(ctx *gin.Context) {
 		Data:       nil,
 	})
 }
+
+func ReinStateAccount(ctx *gin.Context) {
+	userID := ctx.Param("id")
+	user, err := Reinstate(userID)
+	if err != nil {
+		helpers.CreateResponse(ctx, helpers.Response{
+			Message:    "successfully deleted user",
+			StatusCode: http.StatusBadRequest,
+			Data:       nil,
+		})
+		return
+	}
+	helpers.CreateResponse(ctx, helpers.Response{
+		Message:    "successfully reinstated user",
+		StatusCode: http.StatusOK,
+		Data:       user,
+	})
+}

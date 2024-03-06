@@ -159,7 +159,7 @@ func GetUsers(filter FilterDetails, pageNumber string, pageSize string) ([]model
 		return nil, 0, 0, 0, err
 	}
 
-	if err := db.Preload("Profile").Preload("Companies").Preload("JobApplications").Limit(perPage).Offset(offset).Find(&users).Error; err != nil {
+	if err := db.Preload("Profile").Preload("Companies").Preload("JobApplications").Unscoped().Limit(perPage).Offset(offset).Find(&users).Error; err != nil {
 		log.Println("Error finding books:", err)
 		return nil, 0, 0, 0, err
 	}
@@ -213,7 +213,7 @@ func CreateAdminUser(user models.User) (*models.User, error) {
 
 	// Try to find the user
 	existingUser := &models.User{}
-	result := tx.Preload("Profile").Preload("Companies").Preload("JobApplications").Where("mobile_number = ? OR email = ?", user.MobileNumber, user.Email).First(existingUser)
+	result := tx.Preload("Profile").Preload("Companies").Preload("JobApplications").Unscoped().Where("mobile_number = ? OR email = ?", user.MobileNumber, user.Email).First(existingUser)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			if err := tx.Create(&user).Error; err != nil {
@@ -249,4 +249,40 @@ func GetVerificationToken(token string) (models.User, error) {
 		return models.User{}, err
 	}
 	return user, nil
+}
+
+func Reinstate(user_id string) (*models.User, error) {
+	userID, err := uuid.Parse(user_id)
+	if err != nil {
+		return nil, err
+	}
+	tx := database.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+	existingUser := &models.User{}
+	result := tx.Preload("Profile").Unscoped().Where(&models.User{ID: userID}).First(existingUser)
+	if result.Error != nil {
+		tx.Rollback()
+		return nil, fmt.Errorf("error fetching user: %w", result.Error)
+	}
+
+	if !existingUser.DeletedAt.Valid {
+		tx.Rollback()
+		return nil, errors.New("this account wasn't deleted")
+	}
+
+	// Assuming `user` is the soft-deleted record you want to undelete
+	if err := database.Model(&existingUser).Unscoped().Update("deleted_at", gorm.Expr("NULL")).Error; err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	// Commit the transaction
+	if err := tx.Commit().Error; err != nil {
+		return nil, fmt.Errorf("error committing transaction: %w", err)
+	}
+	return existingUser, nil
 }

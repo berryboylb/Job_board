@@ -9,9 +9,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	mrand "math/rand"
 	"net/http"
 	"os"
-	mrand "math/rand"
 	"time"
 
 	"github.com/coreos/go-oidc/v3/oidc"
@@ -245,34 +245,43 @@ func CreateUser(user models.User) (*models.User, bool, error) {
 
 	// Try to find the user
 	existingUser := &models.User{}
-	result := tx.Preload("Profile").Where(models.User{ProviderID: user.ProviderID}).First(existingUser)
+	tx = tx.Where("provider_id = ?", user.ProviderID)
+	if user.Email != "" {
+		tx = tx.Or("email = ?", user.Email)
+	}
+	result := tx.Unscoped().Preload("Profile").First(existingUser)
 	if result.Error != nil {
-		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			// User not found, so create it
-			if err := tx.Create(&user).Error; err != nil {
-				tx.Rollback()
-				return nil, false, fmt.Errorf("error creating user: %w", err)
-			}
-			created := true
-			// Commit the transaction
-			if err := tx.Commit().Error; err != nil {
-				return nil, false, fmt.Errorf("error committing transaction: %w", err)
-			}
-			return &user, created, nil
+		if !errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			tx.Rollback()
+			return nil, false, fmt.Errorf("error fetching user: %w", result.Error)
 		}
-		tx.Rollback()
-		return nil, false, fmt.Errorf("error fetching user: %w", result.Error)
 	}
 
-	// User found, so return it
-	// You may optionally preload associations here
-	// e.g., tx.Model(existingUser).Preload("Companies").Preload("Profile").Preload("JobApplications").First(existingUser)
-	created := false
+	if result.RowsAffected > 0 {
+		// User already exists;  return them
+		if err := tx.Commit().Error; err != nil {
+			return nil, false, fmt.Errorf("error committing transaction: %w", err)
+		}
+		fmt.Println("THE TWO IDS ARE THE SAME",  existingUser.ProviderID, user.ProviderID )
+		if existingUser.ProviderID != user.ProviderID {
+			return nil, false, fmt.Errorf("error returning user: Provider ID mismatch for known user, please use a different provider or a different email %v", nil)
+		}
+		if existingUser.DeletedAt.Valid {
+			return nil, false, fmt.Errorf("error returning user: your account was deleted, but hasn't been cleared, contact support to reinstate it or it would be permanently cleared after 3 months %w", nil)
+		}
+		return existingUser, false, nil
+	}
+
+	// User not found, so create it
+	if err := tx.WithContext(context.Background()).Create(&user).Error; err != nil {
+		tx.Rollback()
+		return nil, false, fmt.Errorf("error creating a new user: %v", err.Error())
+	}
 	// Commit the transaction
 	if err := tx.Commit().Error; err != nil {
 		return nil, false, fmt.Errorf("error committing transaction: %w", err)
 	}
-	return existingUser, created, nil
+	return &user, true, nil
 }
 
 const charset = "0123456789"

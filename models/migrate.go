@@ -1,6 +1,7 @@
 package models
 
 import (
+	// "log"
 	"job_board/db"
 
 	"gorm.io/gorm"
@@ -19,6 +20,12 @@ func MigrateDb() {
 	//this is for index
 	// if err := database.Exec("CREATE INDEX idx_user_email ON users (email) WHERE email IS NOT NULL").Error; err != nil {
 	// 	log.Printf("Error creating index on users table: %v", err)
+	// 	return
+	// }
+
+	// drop the index
+	// if err := database.Exec("DROP INDEX idx_user_email;").Error; err != nil {
+	// 	log.Printf("Error dropping index on users table: %v", err)
 	// 	return
 	// }
 

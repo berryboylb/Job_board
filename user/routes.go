@@ -19,6 +19,7 @@ func UserRoutes(superRoute *gin.RouterGroup) {
 		userRouter.GET("/user", User)
 		userRouter.PATCH("/user", UpdateUser)
 		userRouter.DELETE("/user", DeleteUser)
+		userRouter.PATCH("/user/:id", middleware.RolesMiddleware([]string{string(models.AdminRole), string(models.SuperAdminRole)}), ReinStateAccount)
 	}
 
 }
