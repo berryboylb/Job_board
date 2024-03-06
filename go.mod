@@ -3,6 +3,7 @@ module job_board
 go 1.20
 
 require (
+	github.com/apitoolkit/apitoolkit-go v0.0.0-20240226114120-c566af33a4fe
 	github.com/coreos/go-oidc/v3 v3.9.0
 	github.com/gin-contrib/sessions v0.0.5
 	github.com/gin-gonic/gin v1.9.1
@@ -25,7 +26,6 @@ require (
 	cloud.google.com/go/pubsub v1.33.0 // indirect
 	github.com/AsaiYusuke/jsonpath v1.6.0 // indirect
 	github.com/andybalholm/brotli v1.0.5 // indirect
-	github.com/apitoolkit/apitoolkit-go v0.0.0-20240226114120-c566af33a4fe // indirect
 	github.com/bytedance/sonic v1.9.1 // indirect
 	github.com/chenzhuoyu/base64x v0.0.0-20221115062448-fe3a3abad311 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.2 // indirect

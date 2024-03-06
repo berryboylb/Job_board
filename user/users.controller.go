@@ -16,9 +16,7 @@ import (
 	"job_board/notifications"
 )
 
-func init() {
 
-}
 
 func User(ctx *gin.Context) {
 	//i just want to get the user data
