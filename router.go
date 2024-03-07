@@ -11,6 +11,7 @@ import (
 	"job_board/auth"
 	"job_board/models"
 	"job_board/user"
+	"job_board/gender"
 )
 
 func AddRoutes(superRoute *gin.RouterGroup) {
@@ -32,4 +33,5 @@ func AddRoutes(superRoute *gin.RouterGroup) {
 	//register routes
 	auth.AuthRoutes(superRoute)
 	user.UserRoutes(superRoute)
+	gender.GenderRoutes(superRoute)
 }

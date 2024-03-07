@@ -149,5 +149,4 @@ type SocialMediaAccount struct {
 	Link          string      `gorm:"type:varchar(512);not null" `
 	SocialMediaID uuid.UUID   `gorm:"type:uuid;not null"`
 	SocialMedia   SocialMedia `gorm:"foreignKey:SocialMediaID"`
-	
 }
