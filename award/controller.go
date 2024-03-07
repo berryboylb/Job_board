@@ -1,4 +1,4 @@
-package user
+package award
 
 import (
 	// "fmt"

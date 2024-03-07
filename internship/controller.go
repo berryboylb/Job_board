@@ -1,4 +1,5 @@
-package user
+package internship
+
 
 import (
 	// "fmt"
