@@ -1,4 +1,4 @@
-package comapny
+package company
 
 import (
 	"github.com/gin-gonic/gin"
@@ -21,4 +21,14 @@ func CompanyRoutes(superRoute *gin.RouterGroup) {
 	companyRouter.GET("/:id", getSingle)
 	companyRouter.PATCH("/:id", middleware.RolesMiddleware(everybody), update)
 	companyRouter.DELETE("/:id", middleware.RolesMiddleware(everybody), delete)
+
+	SetupIndustryRoutes(companyRouter.Group("/industries"))
+}
+
+func SetupIndustryRoutes(industryRouter *gin.RouterGroup) {
+	industryRouter.POST("/", jwt.Middleware(), middleware.RolesMiddleware(admins), createIndustry)
+	industryRouter.GET("/", getIndustry)
+	industryRouter.GET("/:id", getSingleIndustry)
+	industryRouter.PATCH("/:id", jwt.Middleware(), middleware.RolesMiddleware(admins), updateIndustry)
+	industryRouter.DELETE("/:id", jwt.Middleware(), middleware.RolesMiddleware(admins), deleteIndustry)
 }

@@ -35,3 +35,23 @@ func update(ctx *gin.Context) {
 func delete(ctx *gin.Context) {
 
 }
+
+func createIndustry(ctx *gin.Context) {
+
+}
+
+func getIndustry(ctx *gin.Context) {
+
+}
+
+func getSingleIndustry(ctx *gin.Context) {
+
+}
+
+func updateIndustry(ctx *gin.Context) {
+
+}
+
+func deleteIndustry(ctx *gin.Context) {
+
+}
