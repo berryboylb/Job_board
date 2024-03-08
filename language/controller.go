@@ -16,6 +16,54 @@ import (
 	// "job_board/notifications"
 )
 
+/*language*/
+
+func CreateLanguage(ctx *gin.Context) {
+
+}
+
+func GetLanguage(ctx *gin.Context) {
+
+}
+
+func GetSingleLanguage(ctx *gin.Context) {
+
+}
+
+func UpdateLanguage(ctx *gin.Context) {
+
+}
+
+func DeleteLanguage(ctx *gin.Context) {
+
+}
+
+/*language segment */
+
+/*language*/
+
+func CreateLanguageProficiency(ctx *gin.Context) {
+
+}
+
+func GetLanguageProficiency(ctx *gin.Context) {
+
+}
+
+func GetSingleLanguageProficiency(ctx *gin.Context) {
+
+}
+
+func UpdateLanguageProficiency(ctx *gin.Context) {
+
+}
+
+func DeleteLanguageProficiency(ctx *gin.Context) {
+
+}
+
+/*language segment */
+
 /* profile language segment  starts*/
 
 func CreateProfileLanguage(ctx *gin.Context) {

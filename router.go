@@ -14,6 +14,7 @@ import (
 	"job_board/gender"
 	"job_board/degree"
 	"job_board/ranking"
+	"job_board/language"
 )
 
 func AddRoutes(superRoute *gin.RouterGroup) {
@@ -38,4 +39,5 @@ func AddRoutes(superRoute *gin.RouterGroup) {
 	gender.GenderRoutes(superRoute)
 	degree.DegreeRoutes(superRoute)
 	ranking.RankingRoutes(superRoute)
+	language.LanguageRoutes(superRoute)
 }
