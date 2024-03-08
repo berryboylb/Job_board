@@ -55,3 +55,24 @@ func updateIndustry(ctx *gin.Context) {
 func deleteIndustry(ctx *gin.Context) {
 
 }
+
+
+func createSizes(ctx *gin.Context) {
+
+}
+
+func getSizes(ctx *gin.Context) {
+
+}
+
+func getSingleSizes(ctx *gin.Context) {
+
+}
+
+func updateSizes(ctx *gin.Context) {
+
+}
+
+func deleteSizes(ctx *gin.Context) {
+
+}
