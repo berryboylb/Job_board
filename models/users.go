@@ -2,10 +2,12 @@ package models
 
 import (
 	"github.com/google/uuid"
+	"github.com/gin-gonic/gin"
 	// "github.com/lib/pq"
 	"gorm.io/gorm"
 
 	"time"
+	"errors"
 
 	"job_board/helpers"
 )
@@ -62,4 +64,18 @@ func (u *User) BeforeCreate(tx *gorm.DB) (err error) {
 		}
 	}
 	return nil
+}
+
+
+func GetUserFromContext(ctx *gin.Context) (*User, error) {
+	value, exists := ctx.Get("user")
+	if !exists {
+		return nil, errors.New("user not found in session")
+	}
+
+	user, ok := value.(User)
+	if !ok {
+		return nil, errors.New("Mismatching types")
+	}
+	return &user, nil
 }

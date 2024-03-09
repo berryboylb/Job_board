@@ -286,3 +286,5 @@ func Reinstate(user_id string) (*models.User, error) {
 	}
 	return existingUser, nil
 }
+
+
