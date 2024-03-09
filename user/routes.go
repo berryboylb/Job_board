@@ -42,7 +42,7 @@ func SetupProfileRoutes(profileRouter *gin.RouterGroup) {
 	profileRouter.POST("/", middleware.RolesMiddleware(everybody), profile.CreateProfile)
 	profileRouter.GET("/", middleware.RolesMiddleware(admins), profile.GetProfile)
 	profileRouter.GET("/:id", middleware.RolesMiddleware(everybody), profile.GetSingleProfile)
-	profileRouter.PATCH("/:id", middleware.RolesMiddleware(everybody), profile.GetProfile)
+	profileRouter.PATCH("/:id", middleware.RolesMiddleware(everybody), profile.UpdateProfile)
 	profileRouter.DELETE("/:id", middleware.RolesMiddleware(everybody), profile.DeleteProfile)
 
 	/* subprofile routes */
