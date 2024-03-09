@@ -147,7 +147,9 @@ func getProfile(search models.Profile) (*models.Profile, error) {
 	return &profile, nil
 }
 
-func updateProfile(search models.Profile, profile models.Profile) (*models.Profile, error) {
+
+
+func updateProfile(search models.Profile, profile map[string]interface{}) (*models.Profile, error) {
     tx := database.Begin()
     defer func() {
         if r := recover(); r != nil {
@@ -156,15 +158,9 @@ func updateProfile(search models.Profile, profile models.Profile) (*models.Profi
     }()
 
     if err := tx.
-        Preload("Educations").
-        Preload("InternShipExperiences").
-        Preload("ProjectsExperiences").
-        Preload("WorkSamples").
-        Preload("Awards").
-        Preload("ProfileLanguages").
-        Preload("SocialMediaAccounts").
+        Model(&models.Profile{}).
         Where(&search).
-        Updates(&profile).Error; err != nil {
+        Updates(profile).Error; err != nil {
         tx.Rollback()
         return nil, fmt.Errorf("error updating profile: %w", err)
     }
@@ -173,12 +169,27 @@ func updateProfile(search models.Profile, profile models.Profile) (*models.Profi
         return nil, fmt.Errorf("error committing transaction: %w", err)
     }
 
-    return &profile, nil
+    updatedProfile := models.Profile{}
+    if err := tx.
+        Where(&search).
+		Preload("Educations").
+        Preload("InternShipExperiences").
+        Preload("ProjectsExperiences").
+        Preload("WorkSamples").
+        Preload("Awards").
+        Preload("ProfileLanguages").
+        Preload("SocialMediaAccounts").
+        First(&updatedProfile).Error; err != nil {
+        return nil, fmt.Errorf("error fetching updated profile: %w", err)
+    }
+
+    return &updatedProfile, nil
 }
 
 
-func deleteSingleProfile(profileID uuid.UUID) error {
-	result := database.Delete(&models.Profile{}, profileID)
+
+func deleteSingleProfile(search models.Profile) error {
+	result := database.Delete(&search)
 	if result.RowsAffected == 0 {
 		return errors.New("user already deleted")
 	}
