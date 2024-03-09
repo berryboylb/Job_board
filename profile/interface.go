@@ -15,6 +15,3 @@ type ProfileDto struct {
 }
 
 
-type FilterProfileDto struct {
-
-}
