@@ -9,19 +9,25 @@ import (
 
 type Industry struct {
 	gorm.Model
-	ID   uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primaryKey"`
-	Name string    `gorm:"type:varchar(250);not null;unique"`
+	ID   uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id"`
+	Name string    `gorm:"type:varchar(250);not null;unique" json:"name"`
+	CreatedAt         time.Time        `json:"created_at"`
+    UpdatedAt         time.Time        `json:"updated_at"`
+    DeletedAt         gorm.DeletedAt   `json:"deleted_at,omitempty"`
 }
 
 type EmployeesSize struct {
 	gorm.Model
-	ID   uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primaryKey"`
-	Name string    `gorm:"type:varchar(250);not null; uniqueIndex"`
+	ID   uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id"`
+	Name string    `gorm:"type:varchar(250);not null; uniqueIndex" json:"name"`
+	CreatedAt         time.Time        `json:"created_at"`
+    UpdatedAt         time.Time        `json:"updated_at"`
+    DeletedAt         gorm.DeletedAt   `json:"deleted_at,omitempty"`
 }
 
 type Company struct {
 	gorm.Model
-	ID              uuid.UUID     `gorm:"type:uuid;default:uuid_generate_v4();primaryKey"`
+	ID              uuid.UUID     `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id"`
 	Name            string        `gorm:"type:varchar(100);not null"`
 	Description     string        `gorm:"type:text;not null"`
 	Website         string        `gorm:"type:varchar(512)"`
@@ -34,23 +40,32 @@ type Company struct {
 	Logo            string        `gorm:"type:varchar(512);default:'https://via.placeholder.com/200x200'"`
 	UserID          uuid.UUID     `gorm:"type:uuid;not null"` // Removed uniqueIndex
 	User            User          `gorm:"foreignKey:UserID"`
+	CreatedAt         time.Time        `json:"created_at"`
+    UpdatedAt         time.Time        `json:"updated_at"`
+    DeletedAt         gorm.DeletedAt   `json:"deleted_at,omitempty"`
 }
 
 type JobType struct {
 	gorm.Model
-	ID   uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primaryKey"`
-	Name string    `gorm:"type:varchar(250);not null; uniqueIndex"`
+	ID   uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id"`
+	Name string    `gorm:"type:varchar(250);not null; uniqueIndex" json:"name"`
+	CreatedAt         time.Time        `json:"created_at"`
+    UpdatedAt         time.Time        `json:"updated_at"`
+    DeletedAt         gorm.DeletedAt   `json:"deleted_at,omitempty"`
 }
 
 type Level struct {
 	gorm.Model
-	ID   uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primaryKey"`
-	Name string    `gorm:"type:varchar(250);not null; uniqueIndex"`
+	ID   uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id"`
+	Name string    `gorm:"type:varchar(250);not null; uniqueIndex" json:"name"`
+	CreatedAt         time.Time        `json:"created_at"`
+    UpdatedAt         time.Time        `json:"updated_at"`
+    DeletedAt         gorm.DeletedAt   `json:"deleted_at,omitempty"`
 }
 
 type Job struct {
 	gorm.Model
-	ID              uuid.UUID        `gorm:"type:uuid;default:uuid_generate_v4();primaryKey"`
+	ID              uuid.UUID        `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id"`
 	Title           string           `gorm:"type:varchar(100);not null"`
 	Description     string           `gorm:"type:text;not null"`
 	Location        string           `gorm:"type:varchar(250);not null"`
@@ -63,6 +78,9 @@ type Job struct {
 	CompanyID       uuid.UUID        `gorm:"type:uuid;not null"`
 	Company         Company          `gorm:"foreignKey: CompanyID"`
 	JobApplications []JobApplication `gorm:"foreignKey:JobID"`
+	CreatedAt         time.Time        `json:"created_at"`
+    UpdatedAt         time.Time        `json:"updated_at"`
+    DeletedAt         gorm.DeletedAt   `json:"deleted_at,omitempty"`
 }
 
 type Status string
@@ -81,11 +99,14 @@ ADD CONSTRAINT unique_applicant_job UNIQUE (applicant_id, job_id);
 */
 type JobApplication struct {
 	gorm.Model
-	ID          uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primaryKey"`
+	ID          uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id"`
 	JobID       uuid.UUID `gorm:"type:uuid;not null;index:idx_job_applications"`
 	Job         Job       `gorm:"foreignKey:JobID"`
 	ApplicantID uuid.UUID `gorm:"type:uuid;not null;index:idx_job_applications"`
 	Applicant   User      `gorm:"foreignKey:ApplicantID"`
 	Status      Status    `gorm:"type:varchar(50);default:'pending'"`
 	AppliedAt   time.Time `gorm:"default:CURRENT_TIMESTAMP"`
+	CreatedAt         time.Time        `json:"created_at"`
+    UpdatedAt         time.Time        `json:"updated_at"`
+    DeletedAt         gorm.DeletedAt   `json:"deleted_at,omitempty"`
 }
