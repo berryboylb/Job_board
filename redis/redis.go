@@ -9,6 +9,7 @@ import (
 	"os"
 	"strconv"
 	"time"
+	"encoding/json"
 )
 
 var client *redis.Client
@@ -34,15 +35,16 @@ func init() {
 	}
 	client = redis.NewClient(&redis.Options{
 		Addr:     redisHost,
-		Password: redisPassword, // no password set
-		DB:       hostNumber,    // use default DB
+		Password: redisPassword, 
+		DB:       hostNumber,    
 	})
 }
-
+// exposes client to be used by other packages
 func GetClient() *redis.Client {
 	return client
 }
 
+// Test function to test connection to redis
 func Test() {
 	ping, err := client.Ping(ctx).Result()
 	if err != nil {
@@ -52,6 +54,7 @@ func Test() {
 	fmt.Println(ping)
 }
 
+// Store function to store a value in redis
 func Store(key string, value interface{}, storageTime int) error {
 	var expiration time.Duration
 	if storageTime != 0 {
@@ -67,6 +70,26 @@ func Store(key string, value interface{}, storageTime int) error {
 	}
 	return nil
 }
+
+// StoreStruct serializes a struct into a JSON string.
+func StoreStruct(value interface{}) ([]byte, error) {
+	jsonValue, err := json.Marshal(value)
+	if err != nil {
+		return nil, err
+	}
+	return jsonValue, nil
+}
+
+
+// UnmarshalStruct unserializes a JSON string into a struct.
+func UnmarshalStruct(jsonValue []byte, result interface{}) error {
+	err := json.Unmarshal(jsonValue, &result)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 
 func Retrieve(key string) (interface{}, error) {
 	result, err := client.Get(ctx, key).Result()
