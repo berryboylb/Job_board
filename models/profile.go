@@ -32,14 +32,14 @@ type Profile struct {
 
 type SalaryCurrency struct {
 	gorm.Model
-	ID   uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primaryKey"`
-	Name string    `gorm:"type:varchar(250);not null; uniqueIndex"`
+	ID   uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id"`
+	Name string    `gorm:"type:varchar(250);not null; uniqueIndex"json:"name"`
 }
 
 type Gender struct {
 	gorm.Model
-	ID   uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primaryKey"`
-	Name string    `gorm:"type:varchar(250);not null; uniqueIndex"`
+	ID   uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id"`
+	Name string    `gorm:"type:varchar(250);not null; uniqueIndex" json:"name"`
 }
 
 type Degree struct {
