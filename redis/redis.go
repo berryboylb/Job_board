@@ -25,12 +25,13 @@ func init() {
 	redisPassword := os.Getenv("REDIS_PASSWORD")
 	redisDB := os.Getenv("REDIS_DB")
 	redisHost := os.Getenv("REDIS_HOST")
+	fmt.Println(redisPassword, redisDB, redisHost)
 
-	if redisPassword == "" || redisDB == "" || redisHost == "" {
+	if  redisDB == "" || redisHost == "" {
 		panic("Error loading redis password, db or host")
 	}
 
-	hostNumber, err := strconv.Atoi(redisHost)
+	hostNumber, err := strconv.Atoi(redisDB)
 	if err != nil {
 		panic("Error converting redis host to int")
 	}
@@ -88,15 +89,15 @@ func UnmarshalStruct(jsonValue []byte, result interface{}) error {
 }
 
 
-func Retrieve(key string) (interface{}, error) {
+func Retrieve(key string) (string, error) {
 	result, err := client.Get(ctx, key).Result()
 	if err != nil {
 		if err == redis.Nil {
 			fmt.Printf("key %s not found in Redis\n", key)
-			return nil, err
+			return "", err
 		}
 		fmt.Printf("failed to get value for key %v from Redis: %v", key, err)
-		return nil, err
+		return "", err
 	}
 	return result, nil
 }

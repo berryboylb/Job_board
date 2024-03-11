@@ -11,11 +11,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 	"gorm.io/gorm"
-	"github.com/go-redis/redis/v8"
 
 	"job_board/db"
 	"job_board/models"
-	cisredis "job_board/redis"
 )
 
 var database *gorm.DB
@@ -167,7 +165,7 @@ func GetUsers(filter FilterDetails, pageNumber string, pageSize string) ([]model
 		return nil, 0, 0, 0, err
 	}
 
-	if err := db.Unscoped().Preload("Profile").Preload("Companies").Preload("JobApplications").Limit(perPage).Offset(offset).Find(&users).Error; err != nil {
+	if err := db.Unscoped().Limit(perPage).Offset(offset).Find(&users).Error; err != nil {
 		log.Println("Error finding books:", err)
 		return nil, 0, 0, 0, err
 	}
@@ -296,36 +294,3 @@ func Reinstate(user_id string) (*models.User, error) {
 }
 
 
-// Retrieve user data from Redis if available, otherwise fetch from database
-
-
-func GetUser(providerID string) (models.User, error) {
-    userStr, err := cisredis.Retrieve(providerID)
-    if err != nil {
-        if err == redis.Nil {
-            // Fetch user data from database
-            user, err := GetSingleUser(models.User{ProviderID: providerID})
-            if err != nil {
-                return models.User{}, fmt.Errorf("failed to fetch user data from database: %w", err)
-            }
-            // Store user data in Redis with an expiration time
-            userStr, err = cisredis.StoreStruct(user) // Fixed: Remove redeclaration
-            if err != nil {
-                return models.User{}, fmt.Errorf("failed to store user data in Redis: %w", err)
-            }
-            expiration := 10 * time.Minute
-            err = cisredis.Store(providerID, userStr, expiration)
-            if err != nil {
-                return models.User{}, fmt.Errorf("failed to store user data in Redis with expiration: %w", err)
-            }
-            return *user, nil
-        }
-        return models.User{}, fmt.Errorf("failed to retrieve user data from Redis: %w", err)
-    }
-
-    var user models.User
-    if err := cisredis.UnmarshalStruct(userStr.([]byte), &user); err != nil {
-        return models.User{}, fmt.Errorf("failed to unmarshal user data from Redis: %w", err)
-    }
-    return user, nil
-}

@@ -77,12 +77,12 @@ func GetUser(providerID string) (models.User, error) {
 				return models.User{}, fmt.Errorf("failed to fetch user data from database: %w", err)
 			}
 			// Store user data in Redis with an expiration time
-			userStr, err = cisredis.StoreStruct(user) // Fixed: Remove redeclaration
+			userByte, err := cisredis.StoreStruct(user) // Fixed: Remove redeclaration
 			if err != nil {
 				return models.User{}, fmt.Errorf("failed to store user data in Redis: %w", err)
 			}
 			expiration := 10 * time.Minute
-			err = cisredis.Store(providerID, userStr, expiration)
+			err = cisredis.Store(providerID, userByte, expiration)
 			if err != nil {
 				return models.User{}, fmt.Errorf("failed to store user data in Redis with expiration: %w", err)
 			}
@@ -92,7 +92,11 @@ func GetUser(providerID string) (models.User, error) {
 	}
 
 	var user models.User
-	if err := cisredis.UnmarshalStruct(userStr.([]byte), &user); err != nil {
+	// val, ok := userStr.([]byte)
+	// if !ok {
+	// 	return models.User{}, fmt.Errorf("user data from Redis is not a string")
+	// }
+	if err := cisredis.UnmarshalStruct([]byte(userStr), &user); err != nil {
 		return models.User{}, fmt.Errorf("failed to unmarshal user data from Redis: %w", err)
 	}
 	return user, nil
