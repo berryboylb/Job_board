@@ -11,7 +11,7 @@ import (
 var admins []models.RoleAllowed = []models.RoleAllowed{models.AdminRole, models.SuperAdminRole}
 
 func RankingRoutes(superRoute *gin.RouterGroup) {
-	rankingRouter := superRoute.Group("/genders")
+	rankingRouter := superRoute.Group("/rankings")
 
 	rankingRouter.POST("/", jwt.Middleware(), middleware.RolesMiddleware(admins), create)
 	rankingRouter.GET("/", get)

@@ -1,11 +1,11 @@
 package main
 
 import (
-	"context"
+	// "context"
 	"log"
-	"os"
+	// "os"
 
-	apitoolkit "github.com/apitoolkit/apitoolkit-go"
+	// apitoolkit "github.com/apitoolkit/apitoolkit-go"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"job_board/models"
@@ -17,14 +17,14 @@ func main() {
 	}
 	models.MigrateDb()
 
-	ctx := context.Background()
-	apitoolkitClient, err := apitoolkit.NewClient(ctx, apitoolkit.Config{APIKey: os.Getenv("API_TOOLKIT")})
-	if err != nil {
-		log.Fatalf("Failed to load monitoring keys: %v", err)
-	}
+	// ctx := context.Background()
+	// apitoolkitClient, err := apitoolkit.NewClient(ctx, apitoolkit.Config{APIKey: os.Getenv("API_TOOLKIT")})
+	// if err != nil {
+	// 	log.Fatalf("Failed to load monitoring keys: %v", err)
+	// }
 
 	app := gin.New()
-	app.Use(apitoolkitClient.GinMiddleware)
+	// app.Use(apitoolkitClient.GinMiddleware)
 
 	router := app.Group("/api/v1")
 	AddRoutes(router)

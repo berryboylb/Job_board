@@ -101,6 +101,7 @@ func Middleware() gin.HandlerFunc {
 		providerID := claims["provider_id"].(string)
 		session := sessions.Default(c)
 		val, ok := session.Get(providerID).(models.User)
+		fmt.Println("GOT HERE", val)
 		if ok {
 			c.Set("claims", claims)
 			c.Set("user", val)

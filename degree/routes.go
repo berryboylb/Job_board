@@ -11,7 +11,7 @@ import (
 var admins []models.RoleAllowed = []models.RoleAllowed{models.AdminRole, models.SuperAdminRole}
 
 func DegreeRoutes(superRoute *gin.RouterGroup) {
-	degreeRouter := superRoute.Group("/genders")
+	degreeRouter := superRoute.Group("/degrees")
 
 	degreeRouter.POST("/", jwt.Middleware(), middleware.RolesMiddleware(admins), create)
 	degreeRouter.GET("/", get)
