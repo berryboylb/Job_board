@@ -8,18 +8,19 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
-
 	"gorm.io/gorm"
+
+	"github.com/go-redis/redis/v8"
 	"job_board/db"
 	"job_board/helpers"
 	"job_board/models"
+	cisredis "job_board/redis"
 )
 
-var database *gorm.DB
 var SecretKey []byte
+var database *gorm.DB
 
 func init() {
 	database = db.GetDB()
@@ -52,6 +53,51 @@ func GenerateJWT(providerID string, isMobile bool) (string, error) {
 	return tokenString, nil
 }
 
+func GetSingleUser(filter models.User) (*models.User, error) {
+	var user models.User
+	if err := database.
+		Preload("Profile").
+		Preload("Profile").
+		Preload("Companies").
+		Preload("JobApplications").
+		Where(&filter).
+		First(&user).Error; err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
+func GetUser(providerID string) (models.User, error) {
+	userStr, err := cisredis.Retrieve(providerID)
+	if err != nil {
+		if err == redis.Nil {
+			// Fetch user data from database
+			user, err := GetSingleUser(models.User{ProviderID: providerID})
+			if err != nil {
+				return models.User{}, fmt.Errorf("failed to fetch user data from database: %w", err)
+			}
+			// Store user data in Redis with an expiration time
+			userStr, err = cisredis.StoreStruct(user) // Fixed: Remove redeclaration
+			if err != nil {
+				return models.User{}, fmt.Errorf("failed to store user data in Redis: %w", err)
+			}
+			expiration := 10 * time.Minute
+			err = cisredis.Store(providerID, userStr, expiration)
+			if err != nil {
+				return models.User{}, fmt.Errorf("failed to store user data in Redis with expiration: %w", err)
+			}
+			return *user, nil
+		}
+		return models.User{}, fmt.Errorf("failed to retrieve user data from Redis: %w", err)
+	}
+
+	var user models.User
+	if err := cisredis.UnmarshalStruct(userStr.([]byte), &user); err != nil {
+		return models.User{}, fmt.Errorf("failed to unmarshal user data from Redis: %w", err)
+	}
+	return user, nil
+}
+
 func Middleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.Request.Header.Get("Authorization")
@@ -61,8 +107,6 @@ func Middleware() gin.HandlerFunc {
 				StatusCode: http.StatusUnauthorized,
 				Data:       nil,
 			})
-			// c.String(http.StatusUnauthorized, "invalid jwt")
-			// c.Abort()
 			return
 		}
 
@@ -81,8 +125,6 @@ func Middleware() gin.HandlerFunc {
 				StatusCode: http.StatusBadRequest,
 				Data:       nil,
 			})
-			// c.String(http.StatusBadRequest, err.Error())
-			// c.Abort()
 			return
 		}
 		claims, ok := token.Claims.(jwt.MapClaims)
@@ -93,34 +135,19 @@ func Middleware() gin.HandlerFunc {
 				StatusCode: http.StatusBadRequest,
 				Data:       nil,
 			})
-			// c.String(http.StatusBadRequest, "invalid jwt")
-			// c.Abort()
 			return
 		}
 
 		providerID := claims["provider_id"].(string)
-		session := sessions.Default(c)
-		val, ok := session.Get(providerID).(models.User)
-		fmt.Println("GOT HERE", val)
-		if ok {
-			c.Set("claims", claims)
-			c.Set("user", val)
-			c.Next()
-			return
-		}
-
-		var user models.User
-		if err := database.Preload("Profile").Preload("Companies").Preload("JobApplications").Where(&models.User{ProviderID: providerID}).First(&user).Error; err != nil {
+		user, err := GetUser(providerID)
+		if err != nil {
 			helpers.CreateResponse(c, helpers.Response{
 				Message:    err.Error(),
-				StatusCode: http.StatusBadRequest,
+				StatusCode: http.StatusInternalServerError,
 				Data:       nil,
 			})
-			// c.String(http.StatusBadRequest, err.Error())
-			// c.Abort()
 			return
 		}
-		session.Set(providerID, user)
 		c.Set("claims", claims)
 		c.Set("user", user)
 		c.Next()

@@ -15,6 +15,7 @@ import (
 var client *redis.Client
 var ctx = context.Background()
 
+
 func init() {
 	err := godotenv.Load()
 	if err != nil {
@@ -38,11 +39,14 @@ func init() {
 		Password: redisPassword, 
 		DB:       hostNumber,    
 	})
+
+	
 }
 // exposes client to be used by other packages
 func GetClient() *redis.Client {
 	return client
 }
+
 
 // Test function to test connection to redis
 func Test() {
@@ -55,14 +59,7 @@ func Test() {
 }
 
 // Store function to store a value in redis
-func Store(key string, value interface{}, storageTime int) error {
-	var expiration time.Duration
-	if storageTime != 0 {
-		expiration = time.Duration(storageTime) * time.Minute
-	} else {
-		expiration = 10 * time.Minute
-	}
-
+func Store(key string, value interface{}, expiration time.Duration) error {
 	err := client.Set(ctx, key, value, expiration).Err()
 	if err != nil {
 		fmt.Printf("failed to set value in redis instance: %v\n", err)
@@ -95,9 +92,11 @@ func Retrieve(key string) (interface{}, error) {
 	result, err := client.Get(ctx, key).Result()
 	if err != nil {
 		if err == redis.Nil {
-			return nil, fmt.Errorf("%v does not exist", key)
+			fmt.Printf("key %s not found in Redis\n", key)
+			return nil, err
 		}
-		return nil, fmt.Errorf("failed to get value for key %v from Redis: %v", key, err)
+		fmt.Printf("failed to get value for key %v from Redis: %v", key, err)
+		return nil, err
 	}
 	return result, nil
 }
