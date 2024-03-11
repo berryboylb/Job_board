@@ -165,7 +165,7 @@ func GetUsers(filter FilterDetails, pageNumber string, pageSize string) ([]model
 		return nil, 0, 0, 0, err
 	}
 
-	if err := db.Unscoped().Limit(perPage).Offset(offset).Find(&users).Error; err != nil {
+	if err := db.Unscoped().Order("created_at DESC").Limit(perPage).Offset(offset).Find(&users).Error; err != nil {
 		log.Println("Error finding books:", err)
 		return nil, 0, 0, 0, err
 	}

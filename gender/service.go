@@ -78,6 +78,7 @@ func get(name string, pageSize string, pageNumber string) ([]models.Gender, int6
 	// Retrieve profiles with preloaded associations
 	var profiles []models.Gender
 	if err := db.
+		Order("created_at DESC").
 		Limit(perPage).
 		Offset(offset).
 		Find(&profiles).Error; err != nil {
