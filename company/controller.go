@@ -36,6 +36,12 @@ func delete(ctx *gin.Context) {
 
 }
 
+
+
+
+
+
+
 func createIndustry(ctx *gin.Context) {
 
 }
@@ -55,6 +61,9 @@ func updateIndustry(ctx *gin.Context) {
 func deleteIndustry(ctx *gin.Context) {
 
 }
+
+
+
 
 
 func createSizes(ctx *gin.Context) {

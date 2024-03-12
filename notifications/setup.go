@@ -52,15 +52,15 @@ func UpdateSubscriber(subscriberID string, name string) (*novu.SubscriberRespons
 }
 
 func SendNotification(payload Trigger) (*novu.EventResponse, error) {
-	to := map[string]interface{}{
-		"lastName":     "",
-		"firstName":    payload.Name,
-		"subscriberId": payload.SubscriberID,
-		"email":        payload.Email,
-	}
+	// to := map[string]interface{}{
+	// 	"lastName":     "",
+	// 	"firstName":    payload.Name,
+	// 	"subscriberId": payload.SubscriberID,
+	// 	"email":        payload.Email,
+	// }
 
 	resp, err := novuClient.EventApi.Trigger(ctx, payload.EventID, novu.ITriggerPayloadOptions{
-		To:      to,
+		To:      payload.To,
 		Payload: payload.Data, // dynamic data
 	})
 	if err != nil {

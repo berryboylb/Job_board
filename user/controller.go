@@ -16,8 +16,6 @@ import (
 	"job_board/notifications"
 )
 
-
-
 func User(ctx *gin.Context) {
 	//i just want to get the user data
 
@@ -138,12 +136,16 @@ func CreateAdmin(ctx *gin.Context) {
 		log.Printf("finished creating subscriber ID: %v", subscriber.SubscriberID)
 		log.Print("Send notification ")
 		notification := notifications.Trigger{
-			Name:         user.Name,
-			Email:        user.Email,
-			Title:        "You have the power",
-			SubscriberID: user.SubscriberID,
-			EventID:      "admin",
-			Logo:         "https://via.placeholder.com/200x200",
+			// Name:         user.Name,
+			// Email:        user.Email,
+			// Title:        "You have the power",
+			// SubscriberID: user.SubscriberID,
+			EventID:      "wel",
+			To: map[string]interface{}{
+				"subscriberId": user.SubscriberID,
+				"phone":        user.MobileNumber,
+				"email":        user.Email,
+			},
 			Data: map[string]interface{}{
 				"companyName": "Jobby",
 				"password":    req.Password,
@@ -272,4 +274,3 @@ func ReinStateAccount(ctx *gin.Context) {
 		Data:       user,
 	})
 }
-

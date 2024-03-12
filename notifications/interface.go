@@ -16,6 +16,7 @@ type Trigger struct {
 	Title        string                 `json:"title"`
 	Logo         string                 `json:"logo"`
 	Data         map[string]interface{} `json:"data"`
+	To           map[string]interface{} `json:"to"`
 }
 
 type TriggerTopic struct {
