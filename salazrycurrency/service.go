@@ -1,4 +1,4 @@
-package degree
+package salazrycurrency
 
 import (
 	"errors"
@@ -19,28 +19,28 @@ func init() {
 	database = db.GetDB()
 }
 
-func createDegree(Degree models.Degree) (*models.Degree, error) {
+func createSalary(salaryCurrency models.SalaryCurrency) (*models.SalaryCurrency, error) {
 	tx := database.Begin()
 	defer func() {
 		if r := recover(); r != nil {
 			tx.Rollback()
 		}
 	}()
-	if err := tx.Create(&Degree).Error; err != nil {
+	if err := tx.Create(&salaryCurrency).Error; err != nil {
 		tx.Rollback()
 		if errors.Is(err, gorm.ErrDuplicatedKey) {
-			return nil, errors.New("Degree with the same name already exists")
+			return nil, errors.New("salaryCurrency with the same name already exists")
 		}
-		return nil, fmt.Errorf("error creating a new Degree: %v", err.Error())
+		return nil, fmt.Errorf("error creating a new SalaryCurrency: %v", err.Error())
 	}
 	if err := tx.Commit().Error; err != nil {
 		return nil, fmt.Errorf("error committing transaction: %w", err)
 	}
 
-	return &Degree, nil
+	return &salaryCurrency, nil
 }
 
-func getDegree(name string, pageSize string, pageNumber string) ([]models.Degree, int64, int, int, error) {
+func getSalary(name string, pageSize string, pageNumber string) ([]models.SalaryCurrency, int64, int, int, error) {
 	// Set default values for page size and page number
 	perPage := 15
 	page := 1
@@ -61,7 +61,7 @@ func getDegree(name string, pageSize string, pageNumber string) ([]models.Degree
 	offset := (page - 1) * perPage
 
 	// Initialize database model with filtering conditions
-	db := database.Model(&models.Degree{})
+	db := database.Model(&models.SalaryCurrency{})
 
 	// Add WHERE clauses only if the corresponding filter fields are not empty or zero
 	if name != "" {
@@ -76,40 +76,40 @@ func getDegree(name string, pageSize string, pageNumber string) ([]models.Degree
 	}
 
 	// Retrieve profiles with preloaded associations
-	var profiles []models.Degree
+	var profiles []models.SalaryCurrency
 	if err := db.
 		Order("created_at DESC").
 		Limit(perPage).
 		Offset(offset).
 		Find(&profiles).Error; err != nil {
-		log.Println("Error finding Degree:", err)
+		log.Println("Error finding SalaryCurrency:", err)
 		return nil, 0, 0, 0, err
 	}
 
 	return profiles, total, page, perPage, nil
 }
 
-func getSingleDegree(search models.Degree) (*models.Degree, error) {
-	Degree := models.Degree{}
+func getSingleSalary(search models.SalaryCurrency) (*models.SalaryCurrency, error) {
+	SalaryCurrency := models.SalaryCurrency{}
 	if err := database.
 		Where(&search).
-		First(&Degree).Error; err != nil {
+		First(&SalaryCurrency).Error; err != nil {
 		return nil, err
 	}
-	return &Degree, nil
+	return &SalaryCurrency, nil
 }
 
-func updateDegree(DegreeID uuid.UUID, name string) (*models.Degree, error) {
+func updateSalary(salaryCurrencyID uuid.UUID, name string) (*models.SalaryCurrency, error) {
     tx := database.Begin()
     defer func() {
         if r := recover(); r != nil {
             tx.Rollback()
         }
     }()
-    result := tx.Model(&models.Degree{}).Where("id = ?", DegreeID).Update("name", name)
+    result := tx.Model(&models.SalaryCurrency{}).Where("id = ?", salaryCurrencyID).Update("name", name)
     if result.Error != nil {
         tx.Rollback()
-        return nil, fmt.Errorf("error updating Degree: %w", result.Error)
+        return nil, fmt.Errorf("error updating SalaryCurrency: %w", result.Error)
     }
 
     // Commit the transaction
@@ -117,15 +117,15 @@ func updateDegree(DegreeID uuid.UUID, name string) (*models.Degree, error) {
         return nil, fmt.Errorf("error committing transaction: %w", err)
     }
 
-    // Return the updated Degree
-    updatedDegree := &models.Degree{ID: DegreeID, Name: name}
-    return updatedDegree, nil
+    // Return the updated SalaryCurrency
+    updatedSalaryCurrency := &models.SalaryCurrency{ID: salaryCurrencyID, Name: name}
+    return updatedSalaryCurrency, nil
 }
 
-func deleteSingle(DegreeID uuid.UUID) error {
-	result := database.Delete(&models.Degree{}, DegreeID)
+func deleteSingle(SalaryCurrencyID uuid.UUID) error {
+	result := database.Delete(&models.SalaryCurrency{}, SalaryCurrencyID)
 	if result.RowsAffected == 0 {
-		return errors.New("degree already deleted")
+		return errors.New("salary already deleted")
 	}
 	return result.Error
 }
