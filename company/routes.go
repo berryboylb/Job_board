@@ -26,11 +26,11 @@ func CompanyRoutes(superRoute *gin.RouterGroup) {
 }
 
 func SetupIndustryRoutes(industryRouter *gin.RouterGroup) {
-	industryRouter.POST("/", jwt.Middleware(), middleware.RolesMiddleware(admins), createIndustry)
-	industryRouter.GET("/", getIndustry)
-	industryRouter.GET("/:id", getSingleIndustry)
-	industryRouter.PATCH("/:id", jwt.Middleware(), middleware.RolesMiddleware(admins), updateIndustry)
-	industryRouter.DELETE("/:id", jwt.Middleware(), middleware.RolesMiddleware(admins), deleteIndustry)
+	industryRouter.POST("/", jwt.Middleware(), middleware.RolesMiddleware(admins), createIndustryHandler)
+	industryRouter.GET("/", getIndustryHandler)
+	industryRouter.GET("/:id", getSingleIndustryHandler)
+	industryRouter.PATCH("/:id", jwt.Middleware(), middleware.RolesMiddleware(admins), updateIndustryHandler)
+	industryRouter.DELETE("/:id", jwt.Middleware(), middleware.RolesMiddleware(admins), deleteIndustryHandler)
 }
 
 func SetupSizesRoutes(sizesRouter *gin.RouterGroup) {

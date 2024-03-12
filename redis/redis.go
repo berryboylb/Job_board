@@ -54,6 +54,7 @@ func Test() {
 	ping, err := client.Ping(ctx).Result()
 	if err != nil {
 		fmt.Println(err.Error())
+		panic(err)
 		return
 	}
 	fmt.Println(ping)
