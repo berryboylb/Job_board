@@ -299,6 +299,10 @@ func LoginAdmin(ctx *gin.Context) {
 			SubscriberID: newuser.SubscriberID,
 			EventID:      "otp",
 			Logo:         "https://via.placeholder.com/200x200",
+			To: map[string]interface{}{
+				"subscriberId": newuser.SubscriberID,
+				"email":        newuser.Email,
+			},
 			Data: map[string]interface{}{
 				"companyName": "Jobby",
 				"otp":         otp,

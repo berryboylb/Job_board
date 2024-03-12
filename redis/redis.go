@@ -41,7 +41,7 @@ func init() {
 		DB:       hostNumber,    
 	})
 
-	
+	Test()
 }
 // exposes client to be used by other packages
 func GetClient() *redis.Client {

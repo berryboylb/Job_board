@@ -140,7 +140,7 @@ func CreateAdmin(ctx *gin.Context) {
 			// Email:        user.Email,
 			// Title:        "You have the power",
 			// SubscriberID: user.SubscriberID,
-			EventID:      "wel",
+			EventID:      "account-activation",
 			To: map[string]interface{}{
 				"subscriberId": user.SubscriberID,
 				"phone":        user.MobileNumber,
