@@ -76,7 +76,7 @@ func getSingle(ctx *gin.Context) {
 		})
 		return
 	}
-	gender, err := getSingleDegree(models.Degree{ID: degreeID})
+	degree, err := getSingleDegree(models.Degree{ID: degreeID})
 	if err != nil {
 		helpers.CreateResponse(ctx, helpers.Response{
 			Message:    err.Error(),
@@ -88,7 +88,7 @@ func getSingle(ctx *gin.Context) {
 	helpers.CreateResponse(ctx, helpers.Response{
 		Message:    "successfully fetched degree",
 		StatusCode: http.StatusOK,
-		Data:       gender,
+		Data:       degree,
 	})
 }
 
