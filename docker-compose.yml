@@ -1,0 +1,48 @@
+version: "3"
+services:
+  jobboard:
+    container_name: jobboard
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./:/app
+    environment:
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_NAME=postgres
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - ADMIN_NAME=admin
+      - ADMIN_EMAIL=admin@example.com
+      - ADMIN_PASSWORD=admin
+      - ADMIN_PICTURE=https://via.placeholder.com/200x200
+      - ADMIN_MOBILE_NUMBER=+1234567890
+      - SECRET_KEY=s7qRTzP6Qndj
+      - REDIS_HOST=redis://redis:6379
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+      - REDIS_PASSWORD=
+    command: ["air"]
+    depends_on:
+      - postgres
+      - redis
+  postgres:
+    image: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=postgres
+    volumes:
+      - ./postgresql:/data/db
+  redis:
+    image: redis 
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./redis:/data/db
+
