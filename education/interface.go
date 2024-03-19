@@ -33,22 +33,22 @@ func (r *Request) ParseEndDate() (time.Time, error) {
 }
 
 func (r *Request) ValidateDates() (*time.Time, *time.Time, error) {
-    startDate, err := r.ParseStartDate()
-    if err != nil {
-        return nil, nil, err
-    }
+	startDate, err := r.ParseStartDate()
+	if err != nil {
+		return nil, nil, err
+	}
 
-    endDate, err := r.ParseEndDate()
-    if err != nil {
-        return nil, nil, err
-    }
+	endDate, err := r.ParseEndDate()
+	if err != nil {
+		return nil, nil, err
+	}
 
-    // Check if both StartDate and EndDate are provided before comparing
-    if !startDate.IsZero() && !endDate.IsZero() && !startDate.Before(endDate) {
-        return nil, nil, fmt.Errorf("StartDate must be before EndDate")
-    }
+	// Check if both StartDate and EndDate are provided before comparing
+	if !startDate.IsZero() && !endDate.IsZero() && !startDate.Before(endDate) {
+		return nil, nil, fmt.Errorf("StartDate must be before EndDate")
+	}
 
-    return &startDate, &endDate, nil
+	return &startDate, &endDate, nil
 }
 
 func (r *Request) ValidateDatesAndIsCurrent() error {
@@ -56,4 +56,15 @@ func (r *Request) ValidateDatesAndIsCurrent() error {
 		return fmt.Errorf("either EndDate or IsCurrent must be provided, but not both")
 	}
 	return nil
+}
+
+type SearchEduction struct {
+	InstitutionName   string    `json:"institution_name" binding:"omitempty"`
+	FieldOFStudy      string    `json:"field_of_study" binding:"omitempty"`
+	DegreeID          uuid.UUID `json:"degree_id" binding:"omitempty"`
+	AcademicRankingID uuid.UUID `json:"academic_ranking_id" binding:"omitempty"`
+	GraduationYear    int       `json:"graduation_year" binding:"omitempty"`
+	StartDate         time.Time    `json:"start_date" binding:"omitempty"`
+	EndDate           time.Time    `json:"end_date" binding:"omitempty"`
+	IsCurrent         bool      `json:"is_current" binding:"omitempty"`
 }
