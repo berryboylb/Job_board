@@ -16,6 +16,7 @@ import (
 	"job_board/ranking"
 	"job_board/language"
 	"job_board/job"
+	"job_board/files"
 )
 
 func AddRoutes(superRoute *gin.RouterGroup) {
@@ -42,4 +43,5 @@ func AddRoutes(superRoute *gin.RouterGroup) {
 	ranking.RankingRoutes(superRoute)
 	language.LanguageRoutes(superRoute)
 	job.JobRoutes(superRoute)
+	files.FileRoutes(superRoute)
 }

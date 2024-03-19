@@ -25,8 +25,9 @@ func main() {
 
 	app := gin.New()
 	// app.Use(apitoolkitClient.GinMiddleware)
-
+	app.MaxMultipartMemory = 8 << 20 //file size 8mb
 	router := app.Group("/api/v1")
+
 	AddRoutes(router)
 
 	app.Run(":3000")

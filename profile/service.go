@@ -111,13 +111,13 @@ func getProfiles(filter ProfileDto, pageSize string, pageNumber string) ([]model
 	// Retrieve profiles with preloaded associations
 	var profiles []models.Profile
 	if err := db.
-		Preload("Educations").
-		Preload("InternShipExperiences").
-		Preload("ProjectsExperiences").
-		Preload("WorkSamples").
-		Preload("Awards").
-		Preload("ProfileLanguages").
-		Preload("SocialMediaAccounts").
+		// Preload("Educations").
+		// Preload("InternShipExperiences").
+		// Preload("ProjectsExperiences").
+		// Preload("WorkSamples").
+		// Preload("Awards").
+		// Preload("ProfileLanguages").
+		// Preload("SocialMediaAccounts").
 		Limit(perPage).
 		Offset(offset).
 		Find(&profiles).Error; err != nil {

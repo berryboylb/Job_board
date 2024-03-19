@@ -82,7 +82,7 @@ type Education struct {
 	GraduationYear    int             `gorm:"not null"`
 	StartDate         time.Time
 	EndDate           *time.Time
-	IsCurrent         *bool `gorm:"default:false"`
+	IsCurrent         *bool  `gorm:"default:false"`
 	CreatedAt         time.Time        `json:"created_at"`
     UpdatedAt         time.Time        `json:"updated_at"`
     DeletedAt         gorm.DeletedAt   `json:"deleted_at,omitempty"`
