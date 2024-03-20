@@ -28,45 +28,45 @@ type Profile struct {
 	ExpectedSalary           float64                `gorm:"type:decimal(10,2);default:0.0"`
 	ExpectedSalaryCurrencyID *uuid.UUID             `gorm:"type:uuid"`
 	ExpectedSalaryCurrency   SalaryCurrency         `gorm:"foreignKey:ExpectedSalaryCurrencyID"`
-	CreatedAt         time.Time        `json:"created_at"`
-    UpdatedAt         time.Time        `json:"updated_at"`
-    DeletedAt         gorm.DeletedAt   `json:"deleted_at,omitempty"`
+	CreatedAt                time.Time              `json:"created_at"`
+	UpdatedAt                time.Time              `json:"updated_at"`
+	DeletedAt                gorm.DeletedAt         `json:"deleted_at,omitempty"`
 }
 
 type SalaryCurrency struct {
 	gorm.Model
-	ID   uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id"`
-	Name string    `gorm:"type:varchar(250);not null; uniqueIndex"json:"name"`
-	CreatedAt         time.Time        `json:"created_at"`
-    UpdatedAt         time.Time        `json:"updated_at"`
-    DeletedAt         gorm.DeletedAt   `json:"deleted_at,omitempty"`
+	ID        uuid.UUID      `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id"`
+	Name      string         `gorm:"type:varchar(250);not null; uniqueIndex"json:"name"`
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
+	DeletedAt gorm.DeletedAt `json:"deleted_at,omitempty"`
 }
 
 type Gender struct {
 	gorm.Model
-	ID   uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id"`
-	Name string    `gorm:"type:varchar(250);not null; uniqueIndex" json:"name"`
-	CreatedAt         time.Time        `json:"created_at"`
-    UpdatedAt         time.Time        `json:"updated_at"`
-    DeletedAt         gorm.DeletedAt   `json:"deleted_at,omitempty"`
+	ID        uuid.UUID      `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id"`
+	Name      string         `gorm:"type:varchar(250);not null; uniqueIndex" json:"name"`
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
+	DeletedAt gorm.DeletedAt `json:"deleted_at,omitempty"`
 }
 
 type Degree struct {
 	gorm.Model
-	ID   uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id"`
-	Name string    `gorm:"type:varchar(250);not null; uniqueIndex" json:"name"`
-	CreatedAt         time.Time        `json:"created_at"`
-    UpdatedAt         time.Time        `json:"updated_at"`
-    DeletedAt         gorm.DeletedAt   `json:"deleted_at,omitempty"`
+	ID        uuid.UUID      `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id"`
+	Name      string         `gorm:"type:varchar(250);not null; uniqueIndex" json:"name"`
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
+	DeletedAt gorm.DeletedAt `json:"deleted_at,omitempty"`
 }
 
 type AcademicRanking struct {
 	gorm.Model
-	ID   uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id"`
-	Name string    `gorm:"type:varchar(250);not null; uniqueIndex" json:"name"`
-	CreatedAt         time.Time        `json:"created_at"`
-    UpdatedAt         time.Time        `json:"updated_at"`
-    DeletedAt         gorm.DeletedAt   `json:"deleted_at,omitempty"`
+	ID        uuid.UUID      `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id"`
+	Name      string         `gorm:"type:varchar(250);not null; uniqueIndex" json:"name"`
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
+	DeletedAt gorm.DeletedAt `json:"deleted_at,omitempty"`
 }
 
 type Education struct {
@@ -82,10 +82,10 @@ type Education struct {
 	GraduationYear    int             `gorm:"not null"`
 	StartDate         time.Time
 	EndDate           *time.Time
-	IsCurrent         *bool  `gorm:"default:false"`
-	CreatedAt         time.Time        `json:"created_at"`
-    UpdatedAt         time.Time        `json:"updated_at"`
-    DeletedAt         gorm.DeletedAt   `json:"deleted_at,omitempty"`
+	IsCurrent         *bool          `gorm:"default:false"`
+	CreatedAt         time.Time      `json:"created_at"`
+	UpdatedAt         time.Time      `json:"updated_at"`
+	DeletedAt         gorm.DeletedAt `json:"deleted_at,omitempty"`
 }
 
 type InternShipExperience struct {
@@ -97,10 +97,10 @@ type InternShipExperience struct {
 	Description string    `gorm:"type:text;not null"`
 	StartDate   time.Time
 	EndDate     *time.Time
-	IsCurrent   *bool `gorm:"default:false"`
-	CreatedAt         time.Time        `json:"created_at"`
-    UpdatedAt         time.Time        `json:"updated_at"`
-    DeletedAt         gorm.DeletedAt   `json:"deleted_at,omitempty"`
+	IsCurrent   *bool          `gorm:"default:false"`
+	CreatedAt   time.Time      `json:"created_at"`
+	UpdatedAt   time.Time      `json:"updated_at"`
+	DeletedAt   gorm.DeletedAt `json:"deleted_at,omitempty"`
 }
 
 type ProjectsExperience struct {
@@ -112,52 +112,52 @@ type ProjectsExperience struct {
 	Description string    `gorm:"type:text;not null"`
 	Link        string    `gorm:"type:varchar(512);not null" ` // Adjusted to use varchar and added not null
 	StartDate   time.Time
-	EndDate     *time.Time // Made nullable
-	CreatedAt         time.Time        `json:"created_at"`
-    UpdatedAt         time.Time        `json:"updated_at"`
-    DeletedAt         gorm.DeletedAt   `json:"deleted_at,omitempty"`
+	EndDate     *time.Time     // Made nullable
+	CreatedAt   time.Time      `json:"created_at"`
+	UpdatedAt   time.Time      `json:"updated_at"`
+	DeletedAt   gorm.DeletedAt `json:"deleted_at,omitempty"`
 }
 
 type WorkSample struct {
 	gorm.Model
-	ID          uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id"`
-	ProfileID   uuid.UUID `gorm:"type:uuid;not null"`
-	Attachment  string    `gorm:"type:varchar(512);not null" `
-	Link        string    `gorm:"type:varchar(512);not null" `
-	Description string    `gorm:"type:text;not null"`
-	CreatedAt         time.Time        `json:"created_at"`
-    UpdatedAt         time.Time        `json:"updated_at"`
-    DeletedAt         gorm.DeletedAt   `json:"deleted_at,omitempty"`
+	ID          uuid.UUID      `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id"`
+	ProfileID   uuid.UUID      `gorm:"type:uuid;not null"`
+	Attachment  string         `gorm:"type:varchar(512);not null" `
+	Link        string         `gorm:"type:varchar(512);not null" `
+	Description string         `gorm:"type:text;not null"`
+	CreatedAt   time.Time      `json:"created_at"`
+	UpdatedAt   time.Time      `json:"updated_at"`
+	DeletedAt   gorm.DeletedAt `json:"deleted_at,omitempty"`
 }
 
 type Award struct {
 	gorm.Model
-	ID          uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id"`
-	ProfileID   uuid.UUID `gorm:"type:uuid;not null"`
-	Title       string    `gorm:"type:varchar(100);not null"`
-	Year        int       `gorm:"not null"`
-	Description string    `gorm:"type:text;not null"`
-	CreatedAt         time.Time        `json:"created_at"`
-    UpdatedAt         time.Time        `json:"updated_at"`
-    DeletedAt         gorm.DeletedAt   `json:"deleted_at,omitempty"`
+	ID          uuid.UUID      `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id"`
+	ProfileID   uuid.UUID      `gorm:"type:uuid;not null"`
+	Title       string         `gorm:"type:varchar(100);not null"`
+	Year        int            `gorm:"not null"`
+	Description string         `gorm:"type:text;not null"`
+	CreatedAt   time.Time      `json:"created_at"`
+	UpdatedAt   time.Time      `json:"updated_at"`
+	DeletedAt   gorm.DeletedAt `json:"deleted_at,omitempty"`
 }
 
 type Language struct {
 	gorm.Model
-	ID   uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id"`
-	Name string    `gorm:"type:varchar(250);not null; uniqueIndex" json:"name"`
-	CreatedAt         time.Time        `json:"created_at"`
-    UpdatedAt         time.Time        `json:"updated_at"`
-    DeletedAt         gorm.DeletedAt   `json:"deleted_at,omitempty"`
+	ID        uuid.UUID      `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id"`
+	Name      string         `gorm:"type:varchar(250);not null; uniqueIndex" json:"name"`
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
+	DeletedAt gorm.DeletedAt `json:"deleted_at,omitempty"`
 }
 
 type LanguageProficiency struct {
 	gorm.Model
-	ID   uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id" `
-	Name string    `gorm:"type:varchar(250);not null; uniqueIndex" json:"name"`
-	CreatedAt         time.Time        `json:"created_at"`
-    UpdatedAt         time.Time        `json:"updated_at"`
-    DeletedAt         gorm.DeletedAt   `json:"deleted_at,omitempty"`
+	ID        uuid.UUID      `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id" `
+	Name      string         `gorm:"type:varchar(250);not null; uniqueIndex" json:"name"`
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
+	DeletedAt gorm.DeletedAt `json:"deleted_at,omitempty"`
 }
 
 type ProfileLanguage struct {
@@ -170,28 +170,28 @@ type ProfileLanguage struct {
 	Language              Language            `gorm:"foreignKey:LanguageID"`
 	LanguageProficiencyID uuid.UUID           `gorm:"type:uuid;not null"`
 	LanguageProficiency   LanguageProficiency `gorm:"foreignKey:LanguageProficiencyID"`
-	CreatedAt         time.Time        `json:"created_at"`
-    UpdatedAt         time.Time        `json:"updated_at"`
-    DeletedAt         gorm.DeletedAt   `json:"deleted_at,omitempty"`
+	CreatedAt             time.Time           `json:"created_at"`
+	UpdatedAt             time.Time           `json:"updated_at"`
+	DeletedAt             gorm.DeletedAt      `json:"deleted_at,omitempty"`
 }
 
 type SocialMedia struct {
 	gorm.Model
-	ID   uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id"`
-	Name string    `gorm:"type:varchar(250);not null; uniqueIndex" json:"name"`
-	CreatedAt         time.Time        `json:"created_at"`
-    UpdatedAt         time.Time        `json:"updated_at"`
-    DeletedAt         gorm.DeletedAt   `json:"deleted_at,omitempty"`
+	ID        uuid.UUID      `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id"`
+	Name      string         `gorm:"type:varchar(250);not null; uniqueIndex" json:"name"`
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
+	DeletedAt gorm.DeletedAt `json:"deleted_at,omitempty"`
 }
 
 type SocialMediaAccount struct {
 	gorm.Model
-	ID            uuid.UUID   `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id"`
-	ProfileID     uuid.UUID   `gorm:"type:uuid;not null"`
-	Link          string      `gorm:"type:varchar(512);not null" `
-	SocialMediaID uuid.UUID   `gorm:"type:uuid;not null"`
-	SocialMedia   SocialMedia `gorm:"foreignKey:SocialMediaID"`
-	CreatedAt         time.Time        `json:"created_at"`
-    UpdatedAt         time.Time        `json:"updated_at"`
-    DeletedAt         gorm.DeletedAt   `json:"deleted_at,omitempty"`
+	ID            uuid.UUID      `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id"`
+	ProfileID     uuid.UUID      `gorm:"type:uuid;not null"`
+	Link          string         `gorm:"type:varchar(512);not null" `
+	SocialMediaID uuid.UUID      `gorm:"type:uuid;not null"`
+	SocialMedia   SocialMedia    `gorm:"foreignKey:SocialMediaID"`
+	CreatedAt     time.Time      `json:"created_at"`
+	UpdatedAt     time.Time      `json:"updated_at"`
+	DeletedAt     gorm.DeletedAt `json:"deleted_at,omitempty"`
 }
