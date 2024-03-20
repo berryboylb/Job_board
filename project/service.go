@@ -1,4 +1,5 @@
-package internship
+package project
+
 
 import (
 	"fmt"
@@ -25,7 +26,7 @@ func checkProfile(user models.User) bool {
 	return false
 }
 
-func createInternship(internship models.InternShipExperience, user models.User) (*models.InternShipExperience, error) {
+func createProject(project models.ProjectsExperience, user models.User) (*models.ProjectsExperience, error) {
 	tx := database.Begin()
 	defer func() {
 		if r := recover(); r != nil {
@@ -37,9 +38,9 @@ func createInternship(internship models.InternShipExperience, user models.User) 
 		return nil, fmt.Errorf("you don't have a profile")
 	}
 
-	if err := tx.Create(&internship).Error; err != nil {
+	if err := tx.Create(&project).Error; err != nil {
 		tx.Rollback()
-		return nil, fmt.Errorf("error creating a new education: %w", err)
+		return nil, fmt.Errorf("error creating a new project experience: %w", err)
 	}
 
 	// Commit the transaction
@@ -47,10 +48,10 @@ func createInternship(internship models.InternShipExperience, user models.User) 
 		return nil, fmt.Errorf("error committing transaction: %w", err)
 	}
 
-	return &internship, nil
+	return &project, nil
 }
 
-func getInternship(filter Search, pageSize string, pageNumber string) ([]models.InternShipExperience, int64, int, int, error) {
+func getProject(filter Search, pageSize string, pageNumber string) ([]models.ProjectsExperience, int64, int, int, error) {
 	// Set default values for page size and page number
 	perPage := 15
 	page := 1
@@ -71,11 +72,11 @@ func getInternship(filter Search, pageSize string, pageNumber string) ([]models.
 	offset := (page - 1) * perPage
 
 	// Initialize database model with filtering conditions
-	db := database.Model(&models.InternShipExperience{})
+	db := database.Model(&models.ProjectsExperience{})
 
 	// Add WHERE clauses only if the corresponding filter fields are not empty or zero
-	if filter.CompanyName != "" {
-		db = db.Where("company_name LIKE ?", "%"+filter.CompanyName+"%")
+	if filter.ProjectName != "" {
+		db = db.Where("project_name LIKE ?", "%"+filter.ProjectName+"%")
 	}
 	if filter.Title != "" {
 		db = db.Where("title LIKE ?", "%"+filter.Title+"%")
@@ -103,24 +104,24 @@ func getInternship(filter Search, pageSize string, pageNumber string) ([]models.
 	}
 
 	// Retrieve profiles with preloaded associations
-	var data []models.InternShipExperience
+	var data []models.ProjectsExperience
 	if err := db.
 		Order("created_at DESC").
 		Limit(perPage).
 		Offset(offset).
 		Find(&data).Error; err != nil {
-		log.Println("Error finding education:", err)
+		log.Println("Error finding project:", err)
 		return nil, 0, 0, 0, err
 	}
 
 	return data, total, page, perPage, nil
 }
 
-func getSingleInternship(ID uuid.UUID, user models.User) (*models.InternShipExperience, error) {
+func getSingleProject(ID uuid.UUID, user models.User) (*models.ProjectsExperience, error) {
 	if profile := checkProfile(user); profile {
 		return nil, fmt.Errorf("you don't have a profile")
 	}
-	var record models.InternShipExperience
+	var record models.ProjectsExperience
 	if err := database.
 		First(&record, "id = ?", ID).Error; err != nil {
 		return nil, err
@@ -134,7 +135,7 @@ func getSingleInternship(ID uuid.UUID, user models.User) (*models.InternShipExpe
 	return &record, nil
 }
 
-func updateInternship(ID uuid.UUID, user models.User, updates Request) (*models.InternShipExperience, error) {
+func updateProject(ID uuid.UUID, user models.User, updates Request) (*models.ProjectsExperience, error) {
 	tx := database.Begin()
 	defer func() {
 		if r := recover(); r != nil {
@@ -142,7 +143,7 @@ func updateInternship(ID uuid.UUID, user models.User, updates Request) (*models.
 		}
 	}()
 
-	var existingRecord models.InternShipExperience
+	var existingRecord models.ProjectsExperience
 	if err := tx.First(&existingRecord, "id = ?", ID).Error; err != nil {
 		return nil, err // Record not found or other database error
 	}
@@ -169,7 +170,7 @@ func updateInternship(ID uuid.UUID, user models.User, updates Request) (*models.
 	return &existingRecord, nil
 }
 
-func deleteSingleInternship(ID uuid.UUID, user models.User) error {
+func deleteSingleProject(ID uuid.UUID, user models.User) error {
 	tx := database.Begin()
 	defer func() {
 		if r := recover(); r != nil {
@@ -177,7 +178,7 @@ func deleteSingleInternship(ID uuid.UUID, user models.User) error {
 		}
 	}()
 
-	var existingRecord models.InternShipExperience
+	var existingRecord models.ProjectsExperience
 	if err := tx.First(&existingRecord, "id = ?", ID).Error; err != nil {
 		tx.Rollback()
 		return err
@@ -189,7 +190,7 @@ func deleteSingleInternship(ID uuid.UUID, user models.User) error {
 		}
 	}
 
-	result := tx.Delete(&models.InternShipExperience{}, "id = ?", ID)
+	result := tx.Delete(&models.ProjectsExperience{}, "id = ?", ID)
 	if result.Error != nil {
 		// Rollback the transaction if an error occurs
 		tx.Rollback()
