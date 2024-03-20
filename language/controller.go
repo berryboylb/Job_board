@@ -303,23 +303,226 @@ func DeleteLanguageProficiency(ctx *gin.Context) {
 /* profile language segment  starts*/
 
 func CreateProfileLanguage(ctx *gin.Context) {
-	
+	user, err := models.GetUserFromContext(ctx)
+	if err != nil {
+		helpers.CreateResponse(ctx, helpers.Response{
+			Message:    err.Error(),
+			StatusCode: http.StatusInternalServerError,
+			Data:       nil,
+		})
+		return
+	}
+
+	var req Request
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		helpers.CreateResponse(ctx, helpers.Response{
+			Message:    err.Error(),
+			StatusCode: http.StatusInternalServerError,
+			Data:       nil,
+		})
+		return
+	}
+
+	newProfileLanguage := models.ProfileLanguage{
+		ProfileID:             user.Profile.ID,
+		Name:                  req.Name,
+		LanguageID:            req.LanguageID,
+		LanguageProficiencyID: req.LanguageProficiencyID,
+	}
+
+	resp, err := createProficiency(newProfileLanguage, *user)
+	if err != nil {
+		helpers.CreateResponse(ctx, helpers.Response{
+			Message:    err.Error(),
+			StatusCode: http.StatusBadRequest,
+			Data:       nil,
+		})
+	}
+
+	helpers.CreateResponse(ctx, helpers.Response{
+		Message:    "Successfully created langauge",
+		StatusCode: http.StatusOK,
+		Data:       resp,
+	})
 }
 
 func GetProfileLanguage(ctx *gin.Context) {
-	
+	var (
+		languageID            uuid.UUID
+		languageProficiencyID uuid.UUID
+		err                   error
+	)
+	if id := ctx.Query("language_id"); id != "" {
+		if languageID, err = uuid.Parse(id); err != nil {
+			helpers.CreateResponse(ctx, helpers.Response{
+				Message:    err.Error(),
+				StatusCode: http.StatusBadRequest,
+				Data:       nil,
+			})
+			return
+		}
+	}
+
+	if id := ctx.Query("language_proficiency_id"); id != "" {
+		if languageProficiencyID, err = uuid.Parse(id); err != nil {
+			helpers.CreateResponse(ctx, helpers.Response{
+				Message:    err.Error(),
+				StatusCode: http.StatusBadRequest,
+				Data:       nil,
+			})
+			return
+		}
+	}
+
+	filter := Search{
+		Name:                  ctx.Query("name"),
+		LanguageID:            languageID,
+		LanguageProficiencyID: languageProficiencyID,
+	}
+
+	resp, total, page, perPage, err := getProficiency(filter, ctx.Query("page_size"), ctx.Query("page_number"))
+	if err != nil {
+		helpers.CreateResponse(ctx, helpers.Response{
+			Message:    err.Error(),
+			StatusCode: http.StatusInternalServerError,
+			Data:       nil,
+		})
+		return
+	}
+	helpers.CreateResponse(ctx, helpers.Response{
+		Message:    "successfully fetched profile languages",
+		StatusCode: http.StatusOK,
+		Data: map[string]interface{}{
+			"data":     resp,
+			"total":    total,
+			"page":     page,
+			"per_page": perPage,
+		},
+	})
 }
 
 func GetSingleProfileLanguage(ctx *gin.Context) {
+	user, err := models.GetUserFromContext(ctx)
+	if err != nil {
+		helpers.CreateResponse(ctx, helpers.Response{
+			Message:    err.Error(),
+			StatusCode: http.StatusInternalServerError,
+			Data:       nil,
+		})
+		return
+	}
 
+	ID, err := uuid.Parse(ctx.Param("id"))
+	if err != nil {
+		helpers.CreateResponse(ctx, helpers.Response{
+			Message:    err.Error(),
+			StatusCode: http.StatusBadRequest,
+			Data:       nil,
+		})
+		return
+	}
+
+	resp, err := getSingleProficiency(ID, *user)
+	if err != nil {
+		helpers.CreateResponse(ctx, helpers.Response{
+			Message:    err.Error(),
+			StatusCode: http.StatusInternalServerError,
+			Data:       nil,
+		})
+		return
+	}
+
+	helpers.CreateResponse(ctx, helpers.Response{
+		Message:    "Successfully fetched proficiency",
+		StatusCode: http.StatusOK,
+		Data:       resp,
+	})
 }
 
 func UpdateProfileLanguage(ctx *gin.Context) {
+	// Get user from context
+	user, err := models.GetUserFromContext(ctx)
+	if err != nil {
+		helpers.CreateResponse(ctx, helpers.Response{
+			Message:    err.Error(),
+			StatusCode: http.StatusInternalServerError,
+			Data:       nil,
+		})
+		return
+	}
 
+	ID, err := uuid.Parse(ctx.Param("id"))
+	if err != nil {
+		helpers.CreateResponse(ctx, helpers.Response{
+			Message:    err.Error(),
+			StatusCode: http.StatusBadRequest,
+			Data:       nil,
+		})
+		return
+	}
+	var req Request
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		helpers.CreateResponse(ctx, helpers.Response{
+			Message:    err.Error(),
+			StatusCode: http.StatusInternalServerError,
+			Data:       nil,
+		})
+		return
+	}
+
+	resp, err := updateProficiency(ID, *user, req)
+	if err != nil {
+		helpers.CreateResponse(ctx, helpers.Response{
+			Message:    err.Error(),
+			StatusCode: http.StatusBadRequest,
+			Data:       nil,
+		})
+		return
+	}
+
+	helpers.CreateResponse(ctx, helpers.Response{
+		Message:    "Successfully updated language  ",
+		StatusCode: http.StatusOK,
+		Data:       resp,
+	})
 }
 
 func DeleteProfileLanguage(ctx *gin.Context) {
+	user, err := models.GetUserFromContext(ctx)
+	if err != nil {
+		helpers.CreateResponse(ctx, helpers.Response{
+			Message:    err.Error(),
+			StatusCode: http.StatusInternalServerError,
+			Data:       nil,
+		})
+		return
+	}
 
+	ID, err := uuid.Parse(ctx.Param("id"))
+	if err != nil {
+		helpers.CreateResponse(ctx, helpers.Response{
+			Message:    err.Error(),
+			StatusCode: http.StatusBadRequest,
+			Data:       nil,
+		})
+		return
+	}
+
+	err = deleteSingleProficiency(ID, *user)
+	if err != nil {
+		helpers.CreateResponse(ctx, helpers.Response{
+			Message:    err.Error(),
+			StatusCode: http.StatusBadRequest,
+			Data:       nil,
+		})
+		return
+	}
+
+	helpers.CreateResponse(ctx, helpers.Response{
+		Message:    "Successfully deleted language",
+		StatusCode: http.StatusOK,
+		Data:       nil,
+	})
 }
 
 /* ProfileLanguage segment ends*/
