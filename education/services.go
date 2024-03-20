@@ -111,3 +111,13 @@ func getEducation(filter SearchEduction, pageSize string, pageNumber string) ([]
 
 	return data, total, page, perPage, nil
 }
+
+func getSingleEducation(search models.Education) (*models.Education, error) {
+	var education models.Education
+	if err := database.
+		Where(&search).
+		First(&education).Error; err != nil {
+		return nil, err
+	}
+	return &education, nil
+}

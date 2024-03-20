@@ -207,7 +207,52 @@ func GetEducation(ctx *gin.Context) {
 }
 
 func GetSingleEducation(ctx *gin.Context) {
+	// Get user from context
+	user, err := models.GetUserFromContext(ctx)
+	if err != nil {
+		helpers.CreateResponse(ctx, helpers.Response{
+			Message:    err.Error(),
+			StatusCode: http.StatusInternalServerError,
+			Data:       nil,
+		})
+		return
+	}
 
+	educationID, err := uuid.Parse(ctx.Param("id"))
+	if err != nil {
+		helpers.CreateResponse(ctx, helpers.Response{
+			Message:    err.Error(),
+			StatusCode: http.StatusBadRequest,
+			Data:       nil,
+		})
+		return
+	}
+
+	query := models.Education{ID: educationID}
+	education, err := getSingleEducation(query)
+	if err != nil {
+		helpers.CreateResponse(ctx, helpers.Response{
+			Message:    err.Error(),
+			StatusCode: http.StatusInternalServerError,
+			Data:       nil,
+		})
+		return
+	}
+
+	if education.ProfileID != user.Profile.ID {
+		helpers.CreateResponse(ctx, helpers.Response{
+			Message:    "You don't have access to this education",
+			StatusCode: http.StatusUnauthorized,
+			Data:       nil,
+		})
+		return
+	}
+
+	helpers.CreateResponse(ctx, helpers.Response{
+		Message:    "Successfully fetched education",
+		StatusCode: http.StatusOK,
+		Data:       education,
+	})
 }
 
 func UpdateEducation(ctx *gin.Context) {
