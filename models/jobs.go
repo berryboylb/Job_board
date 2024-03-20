@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"github.com/google/uuid"
 	"github.com/lib/pq"
 	"gorm.io/gorm"
@@ -74,12 +75,22 @@ type Level struct {
 	DeletedAt gorm.DeletedAt `json:"deleted_at,omitempty"`
 }
 
+type Country struct {
+	gorm.Model
+	ID        uuid.UUID      `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id"`
+	Name      string         `gorm:"type:varchar(250);not null; uniqueIndex" json:"name"`
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
+	DeletedAt gorm.DeletedAt `json:"deleted_at,omitempty"`
+}
+
 type Job struct {
 	gorm.Model
 	ID              uuid.UUID        `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id"`
 	Title           string           `gorm:"type:varchar(100);not null"`
 	Description     string           `gorm:"type:text;not null"`
-	Location        string           `gorm:"type:varchar(250);not null"`
+	CountryID       uuid.UUID        `gorm:"type:uuid;not null"`
+	Country         Country          `gorm:"foreignKey:CountryID"`
 	Salary          float64          `gorm:"type:decimal(10,2);default:0.0"`
 	JobTypeID       uuid.UUID        `gorm:"type:uuid;not null"`
 	JobType         JobType          `gorm:"foreignKey:JobTypeID"`
@@ -89,6 +100,8 @@ type Job struct {
 	CompanyID       uuid.UUID        `gorm:"type:uuid;not null"`
 	Company         Company          `gorm:"foreignKey: CompanyID"`
 	JobApplications []JobApplication `gorm:"foreignKey:JobID"`
+	UserID          uuid.UUID        `gorm:"type:uuid;not null"` // Removed uniqueIndex
+	User            User             `gorm:"foreignKey:UserID"`
 	CreatedAt       time.Time        `json:"created_at"`
 	UpdatedAt       time.Time        `json:"updated_at"`
 	DeletedAt       gorm.DeletedAt   `json:"deleted_at,omitempty"`
@@ -101,6 +114,30 @@ const (
 	Success Status = "success"
 	Failed  Status = "failed"
 )
+
+func ParseStatus(str string) (Status, error) {
+	switch str {
+	case "pending":
+		return Pending, nil
+	case "success":
+		return Success, nil
+	case "failed":
+		return Failed, nil
+	default:
+		return "", fmt.Errorf("unsupported status: %s", str)
+	}
+}
+
+func CheckStatus(status Status) error {
+	switch status {
+	case Success:
+		return nil
+	case Failed:
+		return nil
+	default:
+		return fmt.Errorf("unsupported status for update, only %s or %s is allowed", Success, Failed)
+	}
+}
 
 /*
 you need to run this cript to ensure a user can only apply once to a job

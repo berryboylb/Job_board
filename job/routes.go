@@ -44,8 +44,9 @@ func setupTypeRoutes(sizesRouter *gin.RouterGroup) {
 
 func setupApplicationRoutes(sizesRouter *gin.RouterGroup) {
 	sizesRouter.POST("/", jwt.Middleware(), middleware.RolesMiddleware([]models.RoleAllowed{models.UserRole}), createApplication)
-	sizesRouter.GET("/", jwt.Middleware(), middleware.RolesMiddleware([]models.RoleAllowed{models.UserRole, models.AdminRole, models.SuperAdminRole}), getApplication)
-	sizesRouter.GET("/:id", middleware.RolesMiddleware([]models.RoleAllowed{models.UserRole, models.AdminRole, models.SuperAdminRole}), getSingleType)
+	sizesRouter.GET("/", jwt.Middleware(), middleware.RolesMiddleware([]models.RoleAllowed{models.AdminRole, models.SuperAdminRole}), getApplication)
+	sizesRouter.GET("/application/:id", jwt.Middleware(), middleware.RolesMiddleware([]models.RoleAllowed{models.PosterRole}), getPosterJobApplication)
+	sizesRouter.GET("/:id", middleware.RolesMiddleware([]models.RoleAllowed{models.UserRole, models.PosterRole, models.AdminRole, models.SuperAdminRole}), getSingleType)
 	sizesRouter.PATCH("/:id", jwt.Middleware(), middleware.RolesMiddleware(everybody), updateType)
-	sizesRouter.DELETE("/:id", jwt.Middleware(), middleware.RolesMiddleware( everybody), deleteType)
+	sizesRouter.DELETE("/:id", jwt.Middleware(), middleware.RolesMiddleware(everybody), deleteType)
 }
