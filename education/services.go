@@ -19,6 +19,13 @@ func init() {
 	database = db.GetDB()
 }
 
+func checkProfile(user models.User) bool {
+	if user.Profile == nil {
+		return true
+	}
+	return false
+}
+
 func createEducation(education models.Education) (*models.Education, error) {
 	tx := database.Begin()
 	defer func() {
@@ -120,4 +127,78 @@ func getSingleEducation(search models.Education) (*models.Education, error) {
 		return nil, err
 	}
 	return &education, nil
+}
+
+func updateEducation(educationID uuid.UUID, user models.User, updates Request) (*models.Education, error) {
+	tx := database.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	var existingRecord models.Education
+	if err := tx.First(&existingRecord, "id = ?", educationID).Error; err != nil {
+		return nil, err // Record not found or other database error
+	}
+
+	// Check if the user has permission to update the record
+	if user.RoleName == models.UserRole {
+		if profile := checkProfile(user); profile {
+			return nil, fmt.Errorf("you don't have a profile")
+		}
+		if existingRecord.ProfileID != user.Profile.ID {
+			return nil, fmt.Errorf("you don't have permission to update this record")
+		}
+	}
+
+	// Update the record with the provided updates
+	if err := tx.Model(&existingRecord).Updates(updates).Error; err != nil {
+		return nil, err // Error updating the record
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		return nil, fmt.Errorf("error committing transaction: %w", err)
+	}
+
+	return &existingRecord, nil
+}
+
+func deleteSingleEducation(educationID uuid.UUID, user models.User) error {
+	tx := database.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	var existingRecord models.Education
+    if err := tx.First(&existingRecord, "id = ?", educationID).Error; err != nil {
+        tx.Rollback()
+        return err
+    }
+
+	if user.RoleName == models.UserRole {
+		if existingRecord.ProfileID != user.Profile.ID {
+			return  fmt.Errorf("you don't have permission to update this record")
+		}
+	}
+
+	result := tx.Delete(&models.Education{}, "id = ?", educationID)
+	if result.Error != nil {
+		// Rollback the transaction if an error occurs
+		tx.Rollback()
+		return result.Error
+	}
+
+	// Check if the record was not found
+	if result.RowsAffected == 0 {
+		// Rollback the transaction and return a custom error
+		tx.Rollback()
+		return fmt.Errorf("record with ID %s not found", educationID)
+	}
+	if err := tx.Commit().Error; err != nil {
+		return fmt.Errorf("error committing transaction: %w", err)
+	}
+	return nil
 }
