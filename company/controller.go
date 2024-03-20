@@ -1,6 +1,8 @@
 package company
 
 import (
+	"time"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
@@ -12,23 +14,256 @@ import (
 
 
 func create(ctx *gin.Context) {
+	user, err := models.GetUserFromContext(ctx)
+	if err != nil {
+		helpers.CreateResponse(ctx, helpers.Response{
+			Message:    err.Error(),
+			StatusCode: http.StatusInternalServerError,
+			Data:       nil,
+		})
+		return
+	}
 
+	var req CompanyRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		helpers.CreateResponse(ctx, helpers.Response{
+			Message:    err.Error(),
+			StatusCode: http.StatusInternalServerError,
+			Data:       nil,
+		})
+		return
+	}
+	esthablishedDate,  err := req.ParseStartDate()
+	if err != nil {
+		helpers.CreateResponse(ctx, helpers.Response{
+			Message:    err.Error(),
+			StatusCode: http.StatusBadRequest,
+			Data:       nil,
+		})
+		return
+	}
+
+	newCompany := models.Company{
+		UserID: user.ID,
+		Established: esthablishedDate,
+		Name: req.Name,
+		Description: req.Description,
+		Website: req.Website,
+		IndustryID: req.IndustryID,
+		Location : req.Location,
+		EmployeesSizeID: req.EmployeesSizeID,
+		Logo: req.Logo,
+	}
+
+	resp, err := createCompany(newCompany, *user)
+	if err != nil {
+		helpers.CreateResponse(ctx, helpers.Response{
+			Message:    err.Error(),
+			StatusCode: http.StatusBadRequest,
+			Data:       nil,
+		})
+	}
+
+	helpers.CreateResponse(ctx, helpers.Response{
+		Message:    "Successfully created company",
+		StatusCode: http.StatusOK,
+		Data:       resp,
+	})
 }
 
 func get(ctx *gin.Context) {
+	var (
+		established time.Time
+		industryID uuid.UUID
+		employeesSizeID uuid.UUID
+		err       error
+	)
+	if date := ctx.Query("established"); date != "" {
+		if established, err = time.Parse("2006-01-02", date); err != nil {
+			helpers.CreateResponse(ctx, helpers.Response{
+				Message:    err.Error(),
+				StatusCode: http.StatusBadRequest,
+				Data:       nil,
+			})
+			return
+		}
+	}
 
+	if id := ctx.Query("industry_id"); id != "" {
+		if industryID, err = uuid.Parse(id); err != nil {
+			helpers.CreateResponse(ctx, helpers.Response{
+				Message:    err.Error(),
+				StatusCode: http.StatusBadRequest,
+				Data:       nil,
+			})
+			return
+		}
+	}
+
+	if id := ctx.Query("employee_size_id"); id != "" {
+		if employeesSizeID, err = uuid.Parse(id); err != nil {
+			helpers.CreateResponse(ctx, helpers.Response{
+				Message:    err.Error(),
+				StatusCode: http.StatusBadRequest,
+				Data:       nil,
+			})
+			return
+		}
+	}
+
+	filter := SearchCompanyRequest{
+		Name: ctx.Query("name"),
+		Description: ctx.Query("description"),
+		Website:  ctx.Query("website"),
+		IndustryID:   industryID,
+		Established : established,
+		Location: ctx.Query("location"),
+		EmployeesSizeID: employeesSizeID,
+		Logo: ctx.Query("logo"),
+	}
+
+	resp, total, page, perPage, err := getCompany(filter, ctx.Query("page_size"), ctx.Query("page_number"))
+	if err != nil {
+		helpers.CreateResponse(ctx, helpers.Response{
+			Message:    err.Error(),
+			StatusCode: http.StatusInternalServerError,
+			Data:       nil,
+		})
+		return
+	}
+	helpers.CreateResponse(ctx, helpers.Response{
+		Message:    "successfully fetched companies",
+		StatusCode: http.StatusOK,
+		Data: map[string]interface{}{
+			"data":     resp,
+			"total":    total,
+			"page":     page,
+			"per_page": perPage,
+		},
+	})
 }
 
 func getSingle(ctx *gin.Context) {
+	user, err := models.GetUserFromContext(ctx)
+	if err != nil {
+		helpers.CreateResponse(ctx, helpers.Response{
+			Message:    err.Error(),
+			StatusCode: http.StatusInternalServerError,
+			Data:       nil,
+		})
+		return
+	}
 
+	ID, err := uuid.Parse(ctx.Param("id"))
+	if err != nil {
+		helpers.CreateResponse(ctx, helpers.Response{
+			Message:    err.Error(),
+			StatusCode: http.StatusBadRequest,
+			Data:       nil,
+		})
+		return
+	}
+
+	resp, err := getSingleCompany(ID, *user)
+	if err != nil {
+		helpers.CreateResponse(ctx, helpers.Response{
+			Message:    err.Error(),
+			StatusCode: http.StatusInternalServerError,
+			Data:       nil,
+		})
+		return
+	}
+
+	helpers.CreateResponse(ctx, helpers.Response{
+		Message:    "Successfully fetched company",
+		StatusCode: http.StatusOK,
+		Data:       resp,
+	})
 }
 
 func update(ctx *gin.Context) {
+	user, err := models.GetUserFromContext(ctx)
+	if err != nil {
+		helpers.CreateResponse(ctx, helpers.Response{
+			Message:    err.Error(),
+			StatusCode: http.StatusInternalServerError,
+			Data:       nil,
+		})
+		return
+	}
 
+	ID, err := uuid.Parse(ctx.Param("id"))
+	if err != nil {
+		helpers.CreateResponse(ctx, helpers.Response{
+			Message:    err.Error(),
+			StatusCode: http.StatusBadRequest,
+			Data:       nil,
+		})
+		return
+	}
+	var req Request
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		helpers.CreateResponse(ctx, helpers.Response{
+			Message:    err.Error(),
+			StatusCode: http.StatusInternalServerError,
+			Data:       nil,
+		})
+		return
+	}
+
+	resp, err := updateCompany(ID, *user, req)
+	if err != nil {
+		helpers.CreateResponse(ctx, helpers.Response{
+			Message:    err.Error(),
+			StatusCode: http.StatusBadRequest,
+			Data:       nil,
+		})
+		return
+	}
+
+	helpers.CreateResponse(ctx, helpers.Response{
+		Message:    "Successfully updated company",
+		StatusCode: http.StatusOK,
+		Data:       resp,
+	})
 }
 
 func delete(ctx *gin.Context) {
+	user, err := models.GetUserFromContext(ctx)
+	if err != nil {
+		helpers.CreateResponse(ctx, helpers.Response{
+			Message:    err.Error(),
+			StatusCode: http.StatusInternalServerError,
+			Data:       nil,
+		})
+		return
+	}
 
+	ID, err := uuid.Parse(ctx.Param("id"))
+	if err != nil {
+		helpers.CreateResponse(ctx, helpers.Response{
+			Message:    err.Error(),
+			StatusCode: http.StatusBadRequest,
+			Data:       nil,
+		})
+		return
+	}
+
+	err = deleteSingleCompany(ID, *user)
+	if err != nil {
+		helpers.CreateResponse(ctx, helpers.Response{
+			Message:    err.Error(),
+			StatusCode: http.StatusBadRequest,
+			Data:       nil,
+		})
+		return
+	}
+
+	helpers.CreateResponse(ctx, helpers.Response{
+		Message:    "Successfully deleted company",
+		StatusCode: http.StatusOK,
+		Data:       nil,
+	})
 }
 
 

@@ -242,3 +242,185 @@ func deleteSingle(EmployeesSizeID uuid.UUID) error {
 	}
 	return result.Error
 }
+
+/* company creation segment starts*/
+
+
+
+func createCompany(Company models.Company, user models.User) (*models.Company, error) {
+	tx := database.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	if err := tx.Create(&Company).Error; err != nil {
+		tx.Rollback()
+		return nil, fmt.Errorf("error creating a new Company experience: %w", err)
+	}
+
+	// Commit the transaction
+	if err := tx.Commit().Error; err != nil {
+		return nil, fmt.Errorf("error committing transaction: %w", err)
+	}
+
+	return &Company, nil
+}
+
+func getCompany(filter SearchCompanyRequest, pageSize string, pageNumber string) ([]models.Company, int64, int, int, error) {
+	// Set default values for page size and page number
+	perPage := 15
+	page := 1
+
+	// Parse page size and page number if provided
+	if pageSize != "" {
+		if perPageNum, err := strconv.Atoi(pageSize); err == nil {
+			perPage = perPageNum
+		}
+	}
+	if pageNumber != "" {
+		if pageNum, err := strconv.Atoi(pageNumber); err == nil {
+			page = pageNum
+		}
+	}
+
+	// Calculate offset
+	offset := (page - 1) * perPage
+
+	// Initialize database model with filtering conditions
+	db := database.Model(&models.Company{})
+
+	// Add WHERE clauses only if the corresponding filter fields are not empty or zero
+	if filter.Name != "" {
+		db = db.Where("name LIKE ?", "%"+filter.Name+"%")
+	}
+	if filter.Description != "" {
+		db = db.Where("description = ?", filter.Description)
+	}
+	if filter.Website != "" {
+		db = db.Where("website LIKE ?", "%"+filter.Website+"%")
+	}
+	if filter.Location != "" {
+		db = db.Where("location LIKE ?", "%"+filter.Location+"%")
+	}
+
+	if filter.Logo != "" {
+		db = db.Where("logo LIKE ?", "%"+filter.Logo+"%")
+	}
+	if filter.IndustryID  != uuid.Nil {
+		db = db.Where("industry_id = ?", filter.IndustryID)
+	}
+
+	if filter.EmployeesSizeID  != uuid.Nil {
+		db = db.Where("employee_size_id = ?", filter.EmployeesSizeID)
+	}
+	if !filter.Established .IsZero() {
+		// Convert time to string in the format expected by your database
+		esthablishedStr := filter.Established .Format("2006-01-02")
+		db = db.Where("esthablished >= ?", esthablishedStr)
+	}
+
+
+	// Count total number of profiles
+	var total int64
+	if err := db.Count(&total).Error; err != nil {
+		log.Println("Error counting profiles:", err)
+		return nil, 0, 0, 0, err
+	}
+
+	// Retrieve profiles with preloaded associations
+	var data []models.Company
+	if err := db.
+		Order("created_at DESC").
+		Limit(perPage).
+		Offset(offset).
+		Find(&data).Error; err != nil {
+		log.Println("Error finding Company:", err)
+		return nil, 0, 0, 0, err
+	}
+
+	return data, total, page, perPage, nil
+}
+
+func getSingleCompany(ID uuid.UUID, user models.User) (*models.Company, error) {
+	var record models.Company
+	if err := database.
+		First(&record, "id = ?", ID).Error; err != nil {
+		return nil, err
+	}
+
+	// Check if the user has permission to update the record
+	// if user.RoleName == models.PosterRole && record.UserID != user.ID {
+	// 	return nil, fmt.Errorf("you don't have permission to view this record")
+	// }
+
+	return &record, nil
+}
+
+func updateCompany(ID uuid.UUID, user models.User, updates Request) (*models.Company, error) {
+	tx := database.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	var existingRecord models.Company
+	if err := tx.First(&existingRecord, "id = ?", ID).Error; err != nil {
+		return nil, err // Record not found or other database error
+	}
+
+	// Check if the user has permission to update the record
+	if user.RoleName == models.PosterRole && existingRecord.UserID != user.ID {
+		return nil, fmt.Errorf("you don't have permission to view this record")
+	}
+
+	// Update the record with the provided updates
+	if err := tx.Model(&existingRecord).Updates(updates).Error; err != nil {
+		return nil, err // Error updating the record
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		return nil, fmt.Errorf("error committing transaction: %w", err)
+	}
+
+	return &existingRecord, nil
+}
+
+func deleteSingleCompany(ID uuid.UUID, user models.User) error {
+	tx := database.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	var existingRecord models.Company
+	if err := tx.First(&existingRecord, "id = ?", ID).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if user.RoleName == models.PosterRole && existingRecord.UserID != user.ID {
+		return fmt.Errorf("you don't have permission to view this record")
+	}
+
+	result := tx.Delete(&models.Company{}, "id = ?", ID)
+	if result.Error != nil {
+		// Rollback the transaction if an error occurs
+		tx.Rollback()
+		return result.Error
+	}
+
+	// Check if the record was not found
+	if result.RowsAffected == 0 {
+		// Rollback the transaction and return a custom error
+		tx.Rollback()
+		return fmt.Errorf("record with ID %s not found", ID)
+	}
+	if err := tx.Commit().Error; err != nil {
+		return fmt.Errorf("error committing transaction: %w", err)
+	}
+	return nil
+}
