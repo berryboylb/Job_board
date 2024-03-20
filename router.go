@@ -9,14 +9,15 @@ import (
 	"encoding/gob"
 
 	"job_board/auth"
-	"job_board/models"
-	"job_board/user"
-	"job_board/gender"
+	"job_board/country"
 	"job_board/degree"
-	"job_board/ranking"
-	"job_board/language"
-	"job_board/job"
 	"job_board/files"
+	"job_board/gender"
+	"job_board/job"
+	"job_board/language"
+	"job_board/models"
+	"job_board/ranking"
+	"job_board/user"
 )
 
 func AddRoutes(superRoute *gin.RouterGroup) {
@@ -44,4 +45,5 @@ func AddRoutes(superRoute *gin.RouterGroup) {
 	language.LanguageRoutes(superRoute)
 	job.JobRoutes(superRoute)
 	files.FileRoutes(superRoute)
+	country.CountryRoutes(superRoute)
 }
