@@ -90,37 +90,37 @@ func getLevelFunc(name string, pageSize string, pageNumber string) ([]models.Lev
 	return profiles, total, page, perPage, nil
 }
 
-func getSingleLevelFunc(search models.Level) (*models.Level, error) {
+func getSingleLevelFunc(ID uuid.UUID) (*models.Level, error) {
 	Level := models.Level{}
 	if err := database.
-		Where(&search).
-		First(&Level).Error; err != nil {
+		First(&Level, "id = ?", ID).Error; err != nil {
 		return nil, err
 	}
 	return &Level, nil
 }
 
-func updateLevelFunc(LevelID uuid.UUID, name string) (*models.Level, error) {
+func updateLevelFunc(ID uuid.UUID, name string) (*models.Level, error) {
 	tx := database.Begin()
 	defer func() {
 		if r := recover(); r != nil {
 			tx.Rollback()
 		}
 	}()
-	result := tx.Model(&models.Level{}).Where("id = ?", LevelID).Update("name", name)
-	if result.Error != nil {
-		tx.Rollback()
-		return nil, fmt.Errorf("error updating Level: %w", result.Error)
+	var existingRecord models.Level
+	if err := tx.First(&existingRecord, "id = ?", ID).Error; err != nil {
+		return nil, err // Record not found or other database error
 	}
 
-	// Commit the transaction
+	// Update the record with the provided updates
+	if err := tx.Model(&existingRecord).Update("name", name).Error; err != nil {
+		return nil, err // Error updating the record
+	}
+
 	if err := tx.Commit().Error; err != nil {
 		return nil, fmt.Errorf("error committing transaction: %w", err)
 	}
 
-	// Return the updated Level
-	updatedLevel := &models.Level{ID: LevelID, Name: name}
-	return updatedLevel, nil
+	return &existingRecord, nil
 }
 
 func deleteSingle(LevelID uuid.UUID) error {
@@ -201,37 +201,37 @@ func getJobType(name string, pageSize string, pageNumber string) ([]models.JobTy
 	return profiles, total, page, perPage, nil
 }
 
-func getSingleJobType(search models.JobType) (*models.JobType, error) {
+func getSingleJobType(ID uuid.UUID) (*models.JobType, error) {
 	JobType := models.JobType{}
 	if err := database.
-		Where(&search).
-		First(&JobType).Error; err != nil {
+		First(&JobType, "id = ?", ID).Error; err != nil {
 		return nil, err
 	}
 	return &JobType, nil
 }
 
-func updateJobType(JobTypeID uuid.UUID, name string) (*models.JobType, error) {
+func updateJobType(ID uuid.UUID, name string) (*models.JobType, error) {
 	tx := database.Begin()
 	defer func() {
 		if r := recover(); r != nil {
 			tx.Rollback()
 		}
 	}()
-	result := tx.Model(&models.JobType{}).Where("id = ?", JobTypeID).Update("name", name)
-	if result.Error != nil {
-		tx.Rollback()
-		return nil, fmt.Errorf("error updating JobType: %w", result.Error)
+	var existingRecord models.JobType
+	if err := tx.First(&existingRecord, "id = ?", ID).Error; err != nil {
+		return nil, err // Record not found or other database error
 	}
 
-	// Commit the transaction
+	// Update the record with the provided updates
+	if err := tx.Model(&existingRecord).Update("name", name).Error; err != nil {
+		return nil, err // Error updating the record
+	}
+
 	if err := tx.Commit().Error; err != nil {
 		return nil, fmt.Errorf("error committing transaction: %w", err)
 	}
 
-	// Return the updated JobType
-	updatedJobType := &models.JobType{ID: JobTypeID, Name: name}
-	return updatedJobType, nil
+	return &existingRecord, nil
 }
 
 func deleteSingleJobType(JobTypeID uuid.UUID) error {

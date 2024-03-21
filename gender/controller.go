@@ -4,7 +4,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
-	
 	"net/http"
 
 	"job_board/helpers"
@@ -77,7 +76,7 @@ func getSingleGender(ctx *gin.Context) {
 		})
 		return
 	}
-	gender, err := getSingle(models.Gender{ID: genderID})
+	gender, err := getSingle(genderID)
 	if err != nil {
 		helpers.CreateResponse(ctx, helpers.Response{
 			Message:    err.Error(),

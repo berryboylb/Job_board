@@ -89,37 +89,37 @@ func getDegree(name string, pageSize string, pageNumber string) ([]models.Degree
 	return profiles, total, page, perPage, nil
 }
 
-func getSingleDegree(search models.Degree) (*models.Degree, error) {
+func getSingleDegree(ID uuid.UUID) (*models.Degree, error) {
 	Degree := models.Degree{}
 	if err := database.
-		Where(&search).
-		First(&Degree).Error; err != nil {
+		First(&Degree, "id = ?", ID).Error; err != nil {
 		return nil, err
 	}
 	return &Degree, nil
 }
 
-func updateDegree(DegreeID uuid.UUID, name string) (*models.Degree, error) {
+func updateDegree(ID uuid.UUID, name string) (*models.Degree, error) {
     tx := database.Begin()
     defer func() {
         if r := recover(); r != nil {
             tx.Rollback()
         }
     }()
-    result := tx.Model(&models.Degree{}).Where("id = ?", DegreeID).Update("name", name)
-    if result.Error != nil {
-        tx.Rollback()
-        return nil, fmt.Errorf("error updating Degree: %w", result.Error)
-    }
+    var existingRecord models.Degree
+	if err := tx.First(&existingRecord, "id = ?", ID).Error; err != nil {
+		return nil, err // Record not found or other database error
+	}
 
-    // Commit the transaction
-    if err := tx.Commit().Error; err != nil {
-        return nil, fmt.Errorf("error committing transaction: %w", err)
-    }
+	// Update the record with the provided updates
+	if err := tx.Model(&existingRecord).Update("name", name).Error; err != nil {
+		return nil, err // Error updating the record
+	}
 
-    // Return the updated Degree
-    updatedDegree := &models.Degree{ID: DegreeID, Name: name}
-    return updatedDegree, nil
+	if err := tx.Commit().Error; err != nil {
+		return nil, fmt.Errorf("error committing transaction: %w", err)
+	}
+
+	return &existingRecord, nil
 }
 
 func deleteSingle(DegreeID uuid.UUID) error {

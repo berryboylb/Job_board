@@ -222,3 +222,169 @@ func DeleteSocialMedia(ctx *gin.Context) {
 }
 
 /* SocialMedia segment ends*/
+
+
+func CreateSocial(ctx *gin.Context) {
+
+	var req SocialRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		helpers.CreateResponse(ctx, helpers.Response{
+			Message:    err.Error(),
+			StatusCode: http.StatusInternalServerError,
+			Data:       nil,
+		})
+		return
+	}
+
+	new := models.SocialMedia{
+		Name: req.Name,
+	}
+
+	resp, err := createProject(new)
+	if err != nil {
+		helpers.CreateResponse(ctx, helpers.Response{
+			Message:    err.Error(),
+			StatusCode: http.StatusBadRequest,
+			Data:       nil,
+		})
+	}
+
+	helpers.CreateResponse(ctx, helpers.Response{
+		Message:    "Successfully created socials",
+		StatusCode: http.StatusOK,
+		Data:       resp,
+	})
+}
+
+func GetSocial(ctx *gin.Context) {
+	
+
+	filter := SocialRequest{
+		Name: ctx.Query("name"),
+	}
+
+	resp, total, page, perPage, err := getProject(filter, ctx.Query("page_size"), ctx.Query("page_number"))
+	if err != nil {
+		helpers.CreateResponse(ctx, helpers.Response{
+			Message:    err.Error(),
+			StatusCode: http.StatusInternalServerError,
+			Data:       nil,
+		})
+		return
+	}
+	helpers.CreateResponse(ctx, helpers.Response{
+		Message:    "successfully fetched socials",
+		StatusCode: http.StatusOK,
+		Data: map[string]interface{}{
+			"data":     resp,
+			"total":    total,
+			"page":     page,
+			"per_page": perPage,
+		},
+	})
+}
+
+func GetSingleSocial(ctx *gin.Context) {
+
+	ID, err := uuid.Parse(ctx.Param("id"))
+	if err != nil {
+		helpers.CreateResponse(ctx, helpers.Response{
+			Message:    err.Error(),
+			StatusCode: http.StatusBadRequest,
+			Data:       nil,
+		})
+		return
+	}
+
+	resp, err := getSingleProject(ID)
+	if err != nil {
+		helpers.CreateResponse(ctx, helpers.Response{
+			Message:    err.Error(),
+			StatusCode: http.StatusInternalServerError,
+			Data:       nil,
+		})
+		return
+	}
+
+	helpers.CreateResponse(ctx, helpers.Response{
+		Message:    "Successfully fetched Social",
+		StatusCode: http.StatusOK,
+		Data:       resp,
+	})
+}
+
+func UpdateSocial(ctx *gin.Context) {
+	// Get user from context
+	user, err := models.GetUserFromContext(ctx)
+	if err != nil {
+		helpers.CreateResponse(ctx, helpers.Response{
+			Message:    err.Error(),
+			StatusCode: http.StatusInternalServerError,
+			Data:       nil,
+		})
+		return
+	}
+
+	ID, err := uuid.Parse(ctx.Param("id"))
+	if err != nil {
+		helpers.CreateResponse(ctx, helpers.Response{
+			Message:    err.Error(),
+			StatusCode: http.StatusBadRequest,
+			Data:       nil,
+		})
+		return
+	}
+	var req SocialRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		helpers.CreateResponse(ctx, helpers.Response{
+			Message:    err.Error(),
+			StatusCode: http.StatusInternalServerError,
+			Data:       nil,
+		})
+		return
+	}
+
+	resp, err := updateProject(ID, *user, req.Name)
+	if err != nil {
+		helpers.CreateResponse(ctx, helpers.Response{
+			Message:    err.Error(),
+			StatusCode: http.StatusBadRequest,
+			Data:       nil,
+		})
+		return
+	}
+
+	helpers.CreateResponse(ctx, helpers.Response{
+		Message:    "Successfully updated internship",
+		StatusCode: http.StatusOK,
+		Data:       resp,
+	})
+}
+
+func DeleteSocial(ctx *gin.Context) {
+	ID, err := uuid.Parse(ctx.Param("id"))
+	if err != nil {
+		helpers.CreateResponse(ctx, helpers.Response{
+			Message:    err.Error(),
+			StatusCode: http.StatusBadRequest,
+			Data:       nil,
+		})
+		return
+	}
+
+	err = deleteSingleProject(ID)
+	if err != nil {
+		helpers.CreateResponse(ctx, helpers.Response{
+			Message:    err.Error(),
+			StatusCode: http.StatusBadRequest,
+			Data:       nil,
+		})
+		return
+	}
+
+	helpers.CreateResponse(ctx, helpers.Response{
+		Message:    "Successfully deleted social",
+		StatusCode: http.StatusOK,
+		Data:       nil,
+	})
+}

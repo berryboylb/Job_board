@@ -19,14 +19,14 @@ func init() {
 	database = db.GetDB()
 }
 
-func createIndustry(Industry  models.Industry ) (*models.Industry , error) {
+func createIndustry(Industry models.Industry) (*models.Industry, error) {
 	tx := database.Begin()
 	defer func() {
 		if r := recover(); r != nil {
 			tx.Rollback()
 		}
 	}()
-	if err := tx.Create(&Industry ).Error; err != nil {
+	if err := tx.Create(&Industry).Error; err != nil {
 		tx.Rollback()
 		if errors.Is(err, gorm.ErrDuplicatedKey) {
 			return nil, errors.New("Industry  with the same name already exists")
@@ -37,10 +37,10 @@ func createIndustry(Industry  models.Industry ) (*models.Industry , error) {
 		return nil, fmt.Errorf("error committing transaction: %w", err)
 	}
 
-	return &Industry , nil
+	return &Industry, nil
 }
 
-func getIndustry (name string, pageSize string, pageNumber string) ([]models.Industry , int64, int, int, error) {
+func getIndustry(name string, pageSize string, pageNumber string) ([]models.Industry, int64, int, int, error) {
 	// Set default values for page size and page number
 	perPage := 15
 	page := 1
@@ -61,7 +61,7 @@ func getIndustry (name string, pageSize string, pageNumber string) ([]models.Ind
 	offset := (page - 1) * perPage
 
 	// Initialize database model with filtering conditions
-	db := database.Model(&models.Industry {})
+	db := database.Model(&models.Industry{})
 
 	// Add WHERE clauses only if the corresponding filter fields are not empty or zero
 	if name != "" {
@@ -76,7 +76,7 @@ func getIndustry (name string, pageSize string, pageNumber string) ([]models.Ind
 	}
 
 	// Retrieve profiles with preloaded associations
-	var profiles []models.Industry 
+	var profiles []models.Industry
 	if err := db.
 		Order("created_at DESC").
 		Limit(perPage).
@@ -89,48 +89,45 @@ func getIndustry (name string, pageSize string, pageNumber string) ([]models.Ind
 	return profiles, total, page, perPage, nil
 }
 
-func getSingleIndustry (search models.Industry ) (*models.Industry , error) {
-	Industry  := models.Industry {}
-	if err := database.
-		Where(&search).
-		First(&Industry ).Error; err != nil {
+func getSingleIndustry(ID uuid.UUID) (*models.Industry, error) {
+	Industry := models.Industry{}
+	if err := database.First(&Industry, "id = ?", ID).Error; err != nil {
 		return nil, err
 	}
-	return &Industry , nil
+	return &Industry, nil
 }
 
-func updateIndustry (IndustryID uuid.UUID, name string) (*models.Industry , error) {
-    tx := database.Begin()
-    defer func() {
-        if r := recover(); r != nil {
-            tx.Rollback()
-        }
-    }()
-    result := tx.Model(&models.Industry {}).Where("id = ?", IndustryID).Update("name", name)
-    if result.Error != nil {
-        tx.Rollback()
-        return nil, fmt.Errorf("error updating Industry : %w", result.Error)
-    }
+func updateIndustry(ID uuid.UUID, name string) (*models.Industry, error) {
+	tx := database.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+	var existingRecord models.Industry
+	if err := tx.First(&existingRecord, "id = ?", ID).Error; err != nil {
+		return nil, err // Record not found or other database error
+	}
 
-    // Commit the transaction
-    if err := tx.Commit().Error; err != nil {
-        return nil, fmt.Errorf("error committing transaction: %w", err)
-    }
+	// Update the record with the provided updates
+	if err := tx.Model(&existingRecord).Update("name", name).Error; err != nil {
+		return nil, err // Error updating the record
+	}
 
-    // Return the updated Industry 
-    updatedIndustry  := &models.Industry {ID: IndustryID, Name: name}
-    return updatedIndustry , nil
+	if err := tx.Commit().Error; err != nil {
+		return nil, fmt.Errorf("error committing transaction: %w", err)
+	}
+
+	return &existingRecord, nil
 }
 
 func deleteSingleIndustry(IndustryID uuid.UUID) error {
 	result := database.Delete(&models.Industry{}, IndustryID)
 	if result.RowsAffected == 0 {
-		return errors.New("Industry  already deleted")
+		return errors.New("industry  already deleted")
 	}
 	return result.Error
 }
-
-
 
 func createEmployeesSize(EmployeesSize models.EmployeesSize) (*models.EmployeesSize, error) {
 	tx := database.Begin()
@@ -202,37 +199,37 @@ func getEmployeesSize(name string, pageSize string, pageNumber string) ([]models
 	return profiles, total, page, perPage, nil
 }
 
-func getSingleEmployeesSize(search models.EmployeesSize) (*models.EmployeesSize, error) {
-	EmployeesSize := models.EmployeesSize{}
+func getSingleEmployeesSize(ID uuid.UUID) (*models.EmployeesSize, error) {
+	employeesSize := models.EmployeesSize{}
 	if err := database.
-		Where(&search).
-		First(&EmployeesSize).Error; err != nil {
+		First(&employeesSize, "id = ?", ID).Error; err != nil {
 		return nil, err
 	}
-	return &EmployeesSize, nil
+	return &employeesSize, nil
 }
 
-func updateEmployeesSize(EmployeesSizeID uuid.UUID, name string) (*models.EmployeesSize, error) {
-    tx := database.Begin()
-    defer func() {
-        if r := recover(); r != nil {
-            tx.Rollback()
-        }
-    }()
-    result := tx.Model(&models.EmployeesSize{}).Where("id = ?", EmployeesSizeID).Update("name", name)
-    if result.Error != nil {
-        tx.Rollback()
-        return nil, fmt.Errorf("error updating EmployeesSize: %w", result.Error)
-    }
+func updateEmployeesSize(ID uuid.UUID, name string) (*models.EmployeesSize, error) {
+	tx := database.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+	var existingRecord models.EmployeesSize
+	if err := tx.First(&existingRecord, "id = ?", ID).Error; err != nil {
+		return nil, err // Record not found or other database error
+	}
 
-    // Commit the transaction
-    if err := tx.Commit().Error; err != nil {
-        return nil, fmt.Errorf("error committing transaction: %w", err)
-    }
+	// Update the record with the provided updates
+	if err := tx.Model(&existingRecord).Update("name", name).Error; err != nil {
+		return nil, err // Error updating the record
+	}
 
-    // Return the updated EmployeesSize
-    updatedEmployeesSize := &models.EmployeesSize{ID: EmployeesSizeID, Name: name}
-    return updatedEmployeesSize, nil
+	if err := tx.Commit().Error; err != nil {
+		return nil, fmt.Errorf("error committing transaction: %w", err)
+	}
+
+	return &existingRecord, nil
 }
 
 func deleteSingle(EmployeesSizeID uuid.UUID) error {
@@ -244,8 +241,6 @@ func deleteSingle(EmployeesSizeID uuid.UUID) error {
 }
 
 /* company creation segment starts*/
-
-
 
 func createCompany(Company models.Company, user models.User) (*models.Company, error) {
 	tx := database.Begin()
@@ -308,19 +303,18 @@ func getCompany(filter SearchCompanyRequest, pageSize string, pageNumber string)
 	if filter.Logo != "" {
 		db = db.Where("logo LIKE ?", "%"+filter.Logo+"%")
 	}
-	if filter.IndustryID  != uuid.Nil {
+	if filter.IndustryID != uuid.Nil {
 		db = db.Where("industry_id = ?", filter.IndustryID)
 	}
 
-	if filter.EmployeesSizeID  != uuid.Nil {
+	if filter.EmployeesSizeID != uuid.Nil {
 		db = db.Where("employee_size_id = ?", filter.EmployeesSizeID)
 	}
-	if !filter.Established .IsZero() {
+	if !filter.Established.IsZero() {
 		// Convert time to string in the format expected by your database
-		esthablishedStr := filter.Established .Format("2006-01-02")
+		esthablishedStr := filter.Established.Format("2006-01-02")
 		db = db.Where("esthablished >= ?", esthablishedStr)
 	}
-
 
 	// Count total number of profiles
 	var total int64

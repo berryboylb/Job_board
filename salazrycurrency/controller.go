@@ -76,7 +76,7 @@ func getSingle(ctx *gin.Context) {
 		})
 		return
 	}
-	gender, err := getSingleSalary(models.SalaryCurrency{ID: currencyID})
+	gender, err := getSingleSalary(currencyID)
 	if err != nil {
 		helpers.CreateResponse(ctx, helpers.Response{
 			Message:    err.Error(),

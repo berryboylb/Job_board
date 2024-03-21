@@ -76,7 +76,7 @@ func getSingle(ctx *gin.Context) {
 		})
 		return
 	}
-	ranking, err := getSingleAcademicRanking(models.AcademicRanking{ID: rankingID})
+	ranking, err := getSingleAcademicRanking( rankingID)
 	if err != nil {
 		helpers.CreateResponse(ctx, helpers.Response{
 			Message:    err.Error(),

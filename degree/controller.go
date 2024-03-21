@@ -76,7 +76,7 @@ func getSingle(ctx *gin.Context) {
 		})
 		return
 	}
-	degree, err := getSingleDegree(models.Degree{ID: degreeID})
+	degree, err := getSingleDegree(degreeID)
 	if err != nil {
 		helpers.CreateResponse(ctx, helpers.Response{
 			Message:    err.Error(),

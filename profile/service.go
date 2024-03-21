@@ -128,7 +128,7 @@ func getProfiles(filter ProfileDto, pageSize string, pageNumber string) ([]model
 	return profiles, total, page, perPage, nil
 }
 
-func getProfile(search models.Profile) (*models.Profile, error) {
+func getProfile(ID uuid.UUID, user models.User) (*models.Profile, error) {
 	profile := models.Profile{}
 	if err := database.
 		Preload("Educations").
@@ -138,55 +138,52 @@ func getProfile(search models.Profile) (*models.Profile, error) {
 		Preload("Awards").
 		Preload("ProfileLanguages").
 		Preload("SocialMediaAccounts").
-		Where(&search).
-		First(&profile).Error; 
-		err != nil {
+		First(&profile, "id = ?", ID).Error; err != nil {
 		return nil, err
+	}
+	if (user.RoleName == models.UserRole || user.RoleName == models.PosterRole) && user.ID != profile.UserID {
+		return nil, fmt.Errorf("error: you don't ave access to this resource")
 	}
 
 	return &profile, nil
 }
 
+func updateProfile(ID uuid.UUID, user models.User, profile map[string]interface{}) (*models.Profile, error) {
+	tx := database.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
 
-
-func updateProfile(search models.Profile, profile map[string]interface{}) (*models.Profile, error) {
-    tx := database.Begin()
-    defer func() {
-        if r := recover(); r != nil {
-            tx.Rollback()
-        }
-    }()
-
-    if err := tx.
-        Model(&models.Profile{}).
-        Where(&search).
-        Updates(profile).Error; err != nil {
-        tx.Rollback()
-        return nil, fmt.Errorf("error updating profile: %w", err)
-    }
-
-    if err := tx.Commit().Error; err != nil {
-        return nil, fmt.Errorf("error committing transaction: %w", err)
-    }
-
-    updatedProfile := models.Profile{}
-    if err := tx.
-        Where(&search).
+	var existingRecord models.Profile
+	if err := tx.
 		Preload("Educations").
-        Preload("InternShipExperiences").
-        Preload("ProjectsExperiences").
-        Preload("WorkSamples").
-        Preload("Awards").
-        Preload("ProfileLanguages").
-        Preload("SocialMediaAccounts").
-        First(&updatedProfile).Error; err != nil {
-        return nil, fmt.Errorf("error fetching updated profile: %w", err)
-    }
+		Preload("InternShipExperiences").
+		Preload("ProjectsExperiences").
+		Preload("WorkSamples").
+		Preload("Awards").
+		Preload("ProfileLanguages").
+		Preload("SocialMediaAccounts").
+		First(&existingRecord, "id = ?", ID).Error; err != nil {
+		return nil, err // Record not found or other database error
+	}
 
-    return &updatedProfile, nil
+	if (user.RoleName == models.UserRole || user.RoleName == models.PosterRole) && user.ID != existingRecord.UserID {
+		return nil, fmt.Errorf("error: you don't ave access to this resource")
+	}
+
+	// Update the record with the provided updates
+	if err := tx.Model(&existingRecord).Updates(profile).Error; err != nil {
+		return nil, err // Error updating the record
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		return nil, fmt.Errorf("error committing transaction: %w", err)
+	}
+
+	return &existingRecord, nil
 }
-
-
 
 func deleteSingleProfile(search models.Profile) error {
 	result := database.Delete(&search)

@@ -80,15 +80,6 @@ func GetCountry(ctx *gin.Context) {
 }
 
 func GetSingleCountry(ctx *gin.Context) {
-	user, err := models.GetUserFromContext(ctx)
-	if err != nil {
-		helpers.CreateResponse(ctx, helpers.Response{
-			Message:    err.Error(),
-			StatusCode: http.StatusInternalServerError,
-			Data:       nil,
-		})
-		return
-	}
 
 	ID, err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
@@ -100,7 +91,7 @@ func GetSingleCountry(ctx *gin.Context) {
 		return
 	}
 
-	resp, err := getSingleProject(ID, *user)
+	resp, err := getSingleProject(ID)
 	if err != nil {
 		helpers.CreateResponse(ctx, helpers.Response{
 			Message:    err.Error(),
@@ -166,16 +157,6 @@ func UpdateCountry(ctx *gin.Context) {
 }
 
 func DeleteCountry(ctx *gin.Context) {
-	user, err := models.GetUserFromContext(ctx)
-	if err != nil {
-		helpers.CreateResponse(ctx, helpers.Response{
-			Message:    err.Error(),
-			StatusCode: http.StatusInternalServerError,
-			Data:       nil,
-		})
-		return
-	}
-
 	ID, err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
 		helpers.CreateResponse(ctx, helpers.Response{
@@ -186,7 +167,7 @@ func DeleteCountry(ctx *gin.Context) {
 		return
 	}
 
-	err = deleteSingleProject(ID, *user)
+	err = deleteSingleProject(ID)
 	if err != nil {
 		helpers.CreateResponse(ctx, helpers.Response{
 			Message:    err.Error(),

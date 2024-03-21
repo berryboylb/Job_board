@@ -53,15 +53,14 @@ func GenerateJWT(providerID string, isMobile bool) (string, error) {
 	return tokenString, nil
 }
 
-func GetSingleUser(filter models.User) (*models.User, error) {
+func GetSingleUser(providerID string) (*models.User, error) {
 	var user models.User
 	if err := database.
 		Preload("Profile").
 		Preload("Profile").
 		Preload("Companies").
 		Preload("JobApplications").
-		Where(&filter).
-		First(&user).Error; err != nil {
+		First(&user, "provider_id = ?", providerID).Error; err != nil {
 		return nil, err
 	}
 	return &user, nil
@@ -72,7 +71,7 @@ func GetUser(providerID string) (models.User, error) {
 	if err != nil {
 		if err == redis.Nil {
 			// Fetch user data from database
-			user, err := GetSingleUser(models.User{ProviderID: providerID})
+			user, err := GetSingleUser(providerID)
 			if err != nil {
 				return models.User{}, fmt.Errorf("failed to fetch user data from database: %w", err)
 			}

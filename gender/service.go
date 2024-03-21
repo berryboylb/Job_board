@@ -89,37 +89,37 @@ func get(name string, pageSize string, pageNumber string) ([]models.Gender, int6
 	return profiles, total, page, perPage, nil
 }
 
-func getSingle(search models.Gender) (*models.Gender, error) {
+func getSingle(ID uuid.UUID) (*models.Gender, error) {
 	gender := models.Gender{}
 	if err := database.
-		Where(&search).
-		First(&gender).Error; err != nil {
+		First(&gender, "id = ?", ID).Error; err != nil {
 		return nil, err
 	}
 	return &gender, nil
 }
 
-func update(genderID uuid.UUID, name string) (*models.Gender, error) {
+func update(ID uuid.UUID, name string) (*models.Gender, error) {
     tx := database.Begin()
     defer func() {
         if r := recover(); r != nil {
             tx.Rollback()
         }
     }()
-    result := tx.Model(&models.Gender{}).Where("id = ?", genderID).Update("name", name)
-    if result.Error != nil {
-        tx.Rollback()
-        return nil, fmt.Errorf("error updating gender: %w", result.Error)
-    }
+    var existingRecord models.Gender
+	if err := tx.First(&existingRecord, "id = ?", ID).Error; err != nil {
+		return nil, err // Record not found or other database error
+	}
 
-    // Commit the transaction
-    if err := tx.Commit().Error; err != nil {
-        return nil, fmt.Errorf("error committing transaction: %w", err)
-    }
+	// Update the record with the provided updates
+	if err := tx.Model(&existingRecord).Update("name", name).Error; err != nil {
+		return nil, err // Error updating the record
+	}
 
-    // Return the updated gender
-    updatedGender := &models.Gender{ID: genderID, Name: name}
-    return updatedGender, nil
+	if err := tx.Commit().Error; err != nil {
+		return nil, fmt.Errorf("error committing transaction: %w", err)
+	}
+
+	return &existingRecord, nil
 }
 
 func deleteSingle(genderID uuid.UUID) error {

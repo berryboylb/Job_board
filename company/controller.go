@@ -12,7 +12,6 @@ import (
 	"job_board/models"
 )
 
-
 func create(ctx *gin.Context) {
 	user, err := models.GetUserFromContext(ctx)
 	if err != nil {
@@ -33,7 +32,7 @@ func create(ctx *gin.Context) {
 		})
 		return
 	}
-	esthablishedDate,  err := req.ParseStartDate()
+	esthablishedDate, err := req.ParseStartDate()
 	if err != nil {
 		helpers.CreateResponse(ctx, helpers.Response{
 			Message:    err.Error(),
@@ -44,15 +43,15 @@ func create(ctx *gin.Context) {
 	}
 
 	newCompany := models.Company{
-		UserID: user.ID,
-		Established: esthablishedDate,
-		Name: req.Name,
-		Description: req.Description,
-		Website: req.Website,
-		IndustryID: req.IndustryID,
-		Location : req.Location,
+		UserID:          user.ID,
+		Established:     esthablishedDate,
+		Name:            req.Name,
+		Description:     req.Description,
+		Website:         req.Website,
+		IndustryID:      req.IndustryID,
+		Location:        req.Location,
 		EmployeesSizeID: req.EmployeesSizeID,
-		Logo: req.Logo,
+		Logo:            req.Logo,
 	}
 
 	resp, err := createCompany(newCompany, *user)
@@ -73,10 +72,10 @@ func create(ctx *gin.Context) {
 
 func get(ctx *gin.Context) {
 	var (
-		established time.Time
-		industryID uuid.UUID
+		established     time.Time
+		industryID      uuid.UUID
 		employeesSizeID uuid.UUID
-		err       error
+		err             error
 	)
 	if date := ctx.Query("established"); date != "" {
 		if established, err = time.Parse("2006-01-02", date); err != nil {
@@ -112,14 +111,14 @@ func get(ctx *gin.Context) {
 	}
 
 	filter := SearchCompanyRequest{
-		Name: ctx.Query("name"),
-		Description: ctx.Query("description"),
-		Website:  ctx.Query("website"),
-		IndustryID:   industryID,
-		Established : established,
-		Location: ctx.Query("location"),
+		Name:            ctx.Query("name"),
+		Description:     ctx.Query("description"),
+		Website:         ctx.Query("website"),
+		IndustryID:      industryID,
+		Established:     established,
+		Location:        ctx.Query("location"),
 		EmployeesSizeID: employeesSizeID,
-		Logo: ctx.Query("logo"),
+		Logo:            ctx.Query("logo"),
 	}
 
 	resp, total, page, perPage, err := getCompany(filter, ctx.Query("page_size"), ctx.Query("page_number"))
@@ -266,12 +265,6 @@ func delete(ctx *gin.Context) {
 	})
 }
 
-
-
-
-
-
-
 func createIndustryHandler(ctx *gin.Context) {
 	var req Request
 	if err := ctx.ShouldBindJSON(&req); err != nil {
@@ -336,7 +329,7 @@ func getSingleIndustryHandler(ctx *gin.Context) {
 		})
 		return
 	}
-	industry, err := getSingleIndustry(models.Industry{ID: industryID})
+	industry, err := getSingleIndustry(industryID)
 	if err != nil {
 		helpers.CreateResponse(ctx, helpers.Response{
 			Message:    err.Error(),
@@ -413,10 +406,6 @@ func deleteIndustryHandler(ctx *gin.Context) {
 	})
 }
 
-
-
-
-
 func createSizes(ctx *gin.Context) {
 	var req Request
 	if err := ctx.ShouldBindJSON(&req); err != nil {
@@ -481,7 +470,7 @@ func getSingleSizes(ctx *gin.Context) {
 		})
 		return
 	}
-	size, err := getSingleEmployeesSize(models.EmployeesSize{ID: sizeID})
+	size, err := getSingleEmployeesSize(sizeID)
 	if err != nil {
 		helpers.CreateResponse(ctx, helpers.Response{
 			Message:    err.Error(),

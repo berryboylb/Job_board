@@ -181,7 +181,6 @@ func GetSingleProfile(ctx *gin.Context) {
 	profileID, err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
 		helpers.CreateResponse(ctx, helpers.Response{
-			Message:    err.Error(),
 			StatusCode: http.StatusBadRequest,
 			Data:       nil,
 		})
@@ -189,13 +188,13 @@ func GetSingleProfile(ctx *gin.Context) {
 	}
 
 	// Prepare search criteria
-	search := models.Profile{ID: profileID}
-	if user.RoleName == models.UserRole {
-		search.UserID = user.ID
-	}
+	// search := models.Profile{ID: profileID}
+	// if user.RoleName == models.UserRole {
+	// 	search.UserID = user.ID
+	// }
 
 	// Retrieve profile
-	profile, err := getProfile(search)
+	profile, err := getProfile(profileID, *user)
 	if err != nil {
 		helpers.CreateResponse(ctx, helpers.Response{
 			Message:    err.Error(),
@@ -272,7 +271,7 @@ func UpdateProfile(ctx *gin.Context) {
 	}
 
 	// Update profile
-	profile, err := updateProfile(search, profileMap)
+	profile, err := updateProfile(profileID, *user, profileMap)
 	if err != nil {
 		helpers.CreateResponse(ctx, helpers.Response{
 			Message:    err.Error(),

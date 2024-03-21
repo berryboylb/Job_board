@@ -74,7 +74,7 @@ func get(ctx *gin.Context) {
 		skills    []string
 		salary    float64
 		err       error
-		errsArr  []string
+		errsArr   []string
 	)
 
 	if id := ctx.Query("country_id"); id != "" {
@@ -340,7 +340,7 @@ func getSingleLevel(ctx *gin.Context) {
 		})
 		return
 	}
-	level, err := getSingleLevelFunc(models.Level{ID: levelID})
+	level, err := getSingleLevelFunc(levelID)
 	if err != nil {
 		helpers.CreateResponse(ctx, helpers.Response{
 			Message:    err.Error(),
@@ -481,7 +481,7 @@ func getSingleType(ctx *gin.Context) {
 		})
 		return
 	}
-	types, err := getSingleJobType(models.JobType{ID: typeID})
+	types, err := getSingleJobType(typeID)
 	if err != nil {
 		helpers.CreateResponse(ctx, helpers.Response{
 			Message:    err.Error(),
@@ -516,7 +516,7 @@ func updateType(ctx *gin.Context) {
 		})
 		return
 	}
-	types, err := updateLevelFunc(typeID, req.Name)
+	types, err := updateJobType(typeID, req.Name)
 	if err != nil {
 		helpers.CreateResponse(ctx, helpers.Response{
 			Message:    err.Error(),
@@ -580,10 +580,10 @@ func createApplication(ctx *gin.Context) {
 	}
 
 	newProject := models.JobApplication{
-		JobID: req.JobID,
+		JobID:       req.JobID,
 		ApplicantID: user.ID,
-		Status: models.Pending,
-		AppliedAt: time.Now() ,
+		Status:      models.Pending,
+		AppliedAt:   time.Now(),
 	}
 
 	resp, err := createJobApplication(newProject, *user)
@@ -606,11 +606,11 @@ func createApplication(ctx *gin.Context) {
 
 func getApplication(ctx *gin.Context) {
 	var (
-		jobID  uuid.UUID
-		applicantID  uuid.UUID
-		status      models.Status         
-		appliedAt   time.Time 
-		err       error
+		jobID       uuid.UUID
+		applicantID uuid.UUID
+		status      models.Status
+		appliedAt   time.Time
+		err         error
 	)
 	if date := ctx.Query("applied_at"); date != "" {
 		if appliedAt, err = time.Parse("2006-01-02", date); err != nil {
@@ -634,7 +634,7 @@ func getApplication(ctx *gin.Context) {
 		}
 	}
 
-		if id := ctx.Query("applicant_id"); id != "" {
+	if id := ctx.Query("applicant_id"); id != "" {
 		if applicantID, err = uuid.Parse(id); err != nil {
 			helpers.CreateResponse(ctx, helpers.Response{
 				Message:    err.Error(),
@@ -657,10 +657,10 @@ func getApplication(ctx *gin.Context) {
 	}
 
 	filter := SearchApplication{
-		JobID: jobID,
-		ApplicantID: applicantID ,
-		Status: status,
-		AppliedAt: appliedAt ,
+		JobID:       jobID,
+		ApplicantID: applicantID,
+		Status:      status,
+		AppliedAt:   appliedAt,
 	}
 
 	resp, total, page, perPage, err := getJobApplication(filter, ctx.Query("page_size"), ctx.Query("page_number"))
@@ -776,7 +776,6 @@ func updateApplication(ctx *gin.Context) {
 		return
 	}
 
-
 	ID, err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
 		helpers.CreateResponse(ctx, helpers.Response{
@@ -796,8 +795,8 @@ func updateApplication(ctx *gin.Context) {
 		return
 	}
 
-	 status, err := models.ParseStatus(req.Status);
-	 if err != nil {
+	status, err := models.ParseStatus(req.Status)
+	if err != nil {
 		helpers.CreateResponse(ctx, helpers.Response{
 			Message:    err.Error(),
 			StatusCode: http.StatusInternalServerError,

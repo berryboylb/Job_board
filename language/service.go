@@ -89,37 +89,37 @@ func getLanguage(name string, pageSize string, pageNumber string) ([]models.Lang
 	return profiles, total, page, perPage, nil
 }
 
-func getSingleLanguage(search models.Language) (*models.Language, error) {
+func getSingleLanguage(ID uuid.UUID) (*models.Language, error) {
 	Language := models.Language{}
 	if err := database.
-		Where(&search).
-		First(&Language).Error; err != nil {
+		First(&Language, "id = ?", ID).Error; err != nil {
 		return nil, err
 	}
 	return &Language, nil
 }
 
-func updateLanguage(LanguageID uuid.UUID, name string) (*models.Language, error) {
+func updateLanguage(ID uuid.UUID, name string) (*models.Language, error) {
     tx := database.Begin()
     defer func() {
         if r := recover(); r != nil {
             tx.Rollback()
         }
     }()
-    result := tx.Model(&models.Language{}).Where("id = ?", LanguageID).Update("name", name)
-    if result.Error != nil {
-        tx.Rollback()
-        return nil, fmt.Errorf("error updating Language: %w", result.Error)
-    }
+    var existingRecord models.Language
+	if err := tx.First(&existingRecord, "id = ?", ID).Error; err != nil {
+		return nil, err // Record not found or other database error
+	}
 
-    // Commit the transaction
-    if err := tx.Commit().Error; err != nil {
-        return nil, fmt.Errorf("error committing transaction: %w", err)
-    }
+	// Update the record with the provided updates
+	if err := tx.Model(&existingRecord).Update("name", name).Error; err != nil {
+		return nil, err // Error updating the record
+	}
 
-    // Return the updated Language
-    updatedLanguage := &models.Language{ID: LanguageID, Name: name}
-    return updatedLanguage, nil
+	if err := tx.Commit().Error; err != nil {
+		return nil, fmt.Errorf("error committing transaction: %w", err)
+	}
+
+	return &existingRecord, nil
 }
 
 func deleteLanguage(LanguageID uuid.UUID) error {
@@ -202,37 +202,37 @@ func getLanguageProficiency(name string, pageSize string, pageNumber string) ([]
 	return profiles, total, page, perPage, nil
 }
 
-func getSingleLanguageProficiency(search models.LanguageProficiency) (*models.LanguageProficiency, error) {
+func getSingleLanguageProficiency(ID uuid.UUID) (*models.LanguageProficiency, error) {
 	LanguageProficiency := models.LanguageProficiency{}
 	if err := database.
-		Where(&search).
-		First(&LanguageProficiency).Error; err != nil {
+		First(&LanguageProficiency, "id = ?", ID).Error; err != nil {
 		return nil, err
 	}
 	return &LanguageProficiency, nil
 }
 
-func updateLanguageProficiency(LanguageProficiencyID uuid.UUID, name string) (*models.LanguageProficiency, error) {
+func updateLanguageProficiency(ID uuid.UUID, name string) (*models.LanguageProficiency, error) {
     tx := database.Begin()
     defer func() {
         if r := recover(); r != nil {
             tx.Rollback()
         }
     }()
-    result := tx.Model(&models.LanguageProficiency{}).Where("id = ?", LanguageProficiencyID).Update("name", name)
-    if result.Error != nil {
-        tx.Rollback()
-        return nil, fmt.Errorf("error updating LanguageProficiency: %w", result.Error)
-    }
+   var existingRecord models.LanguageProficiency
+	if err := tx.First(&existingRecord, "id = ?", ID).Error; err != nil {
+		return nil, err // Record not found or other database error
+	}
 
-    // Commit the transaction
-    if err := tx.Commit().Error; err != nil {
-        return nil, fmt.Errorf("error committing transaction: %w", err)
-    }
+	// Update the record with the provided updates
+	if err := tx.Model(&existingRecord).Update("name", name).Error; err != nil {
+		return nil, err // Error updating the record
+	}
 
-    // Return the updated LanguageProficiency
-    updatedLanguageProficiency := &models.LanguageProficiency{ID: LanguageProficiencyID, Name: name}
-    return updatedLanguageProficiency, nil
+	if err := tx.Commit().Error; err != nil {
+		return nil, fmt.Errorf("error committing transaction: %w", err)
+	}
+
+	return &existingRecord, nil
 }
 
 func deleteSingle(LanguageProficiencyID uuid.UUID) error {

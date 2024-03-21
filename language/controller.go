@@ -76,7 +76,7 @@ func GetSingleLanguage(ctx *gin.Context) {
 		})
 		return
 	}
-	language, err := getSingleLanguage(models.Language{ID: languageID})
+	language, err := getSingleLanguage(languageID)
 	if err != nil {
 		helpers.CreateResponse(ctx, helpers.Response{
 			Message:    err.Error(),
@@ -221,7 +221,7 @@ func GetSingleLanguageProficiency(ctx *gin.Context) {
 		})
 		return
 	}
-	languageProficiency, err := getSingleLanguageProficiency(models.LanguageProficiency{ID: languageProficiencyID})
+	languageProficiency, err := getSingleLanguageProficiency(languageProficiencyID)
 	if err != nil {
 		helpers.CreateResponse(ctx, helpers.Response{
 			Message:    err.Error(),

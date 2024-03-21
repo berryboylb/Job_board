@@ -88,7 +88,7 @@ func getProject(filter Request, pageSize string, pageNumber string) ([]models.Co
 	return data, total, page, perPage, nil
 }
 
-func getSingleProject(ID uuid.UUID, user models.User) (*models.Country, error) {
+func getSingleProject(ID uuid.UUID) (*models.Country, error) {
 	var record models.Country
 	if err := database.
 		First(&record, "id = ?", ID).Error; err != nil {
@@ -122,7 +122,7 @@ func updateProject(ID uuid.UUID, user models.User, name string) (*models.Country
 	return &existingRecord, nil
 }
 
-func deleteSingleProject(ID uuid.UUID, user models.User) error {
+func deleteSingleProject(ID uuid.UUID) error {
 	tx := database.Begin()
 	defer func() {
 		if r := recover(); r != nil {
